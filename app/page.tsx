@@ -87,6 +87,7 @@ export default function Portfolio() {
     { id: "skills", label: "Skills" },
     { id: "assessments", label: "Assessments" },
     { id: "portfolio", label: "Work Samples" },
+    { id: "resume", label: "Resume" },
   ]
 
   return (
@@ -817,6 +818,46 @@ export default function Portfolio() {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Resume Section */}
+        {activeSection === "resume" && (
+          <div className="bg-slate-800/50 backdrop-blur-lg p-12 rounded-2xl shadow-2xl border border-slate-700/50 animate-in slide-in-from-bottom-4 duration-600">
+            <h2 className="text-4xl font-bold text-center mb-12 text-white relative">
+              Download My Resume
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 h-1 bg-blue-500 rounded-full mt-4"></div>
+            </h2>
+
+            <div className="text-center p-12 bg-slate-700/30 rounded-2xl border-t-4 border-blue-500">
+              <p className="text-slate-300 mb-8 leading-relaxed max-w-2xl mx-auto">
+                A comprehensive overview of my professional experience, education, projects, and skills.
+              </p>
+              <a
+                href="/joseph-te-enriquez-resume.pdf"
+                download="Joseph_Te_Enriquez_Resume.pdf"
+                className="bg-blue-600 text-white px-8 py-4 rounded-full font-medium hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-lg inline-flex items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                Download Resume (PDF)
+              </a>
+              <p className="mt-6 text-slate-400 text-sm">Click the button above to download my resume in PDF format.</p>
             </div>
           </div>
         )}
