@@ -486,7 +486,7 @@
          data-section-id="{{ section.id }}">
       {%- assign current_filter = request.query_parameters.door_type | default: '' -%}
       {%- assign shown = 0 -%}
-
+      {%- paginate collection.products by 250 -%}
       {%- for product in collection.products -%}
         {%- assign door_mf = product.metafields.custom.door_type -%}
         {%- if door_mf == blank -%}{%- assign door_mf = product.metafields['custom']['door_type'] -%}{%- endif -%}
@@ -622,6 +622,7 @@
           </div>
         </article>
       {%- endfor -%}
+      {%- endpaginate -%}
     </div>
 
     <div id="broen-empty-{{ ai_gen_id }}" class="broen-empty-state-{{ ai_gen_id }}" style="{% if shown > 0 %}display:none{% endif %}">
@@ -910,13 +911,12 @@
     return res.ok ? res.text() : '';
   }
   async function fetchCardsPage(page){
-    const baseCardsUrl = `${window.location.origin}${'{{ collection.url }}'}?view=broen-cards`;
     const cur = new URL(window.location.href);
     const door = cur.searchParams.get('door_type') || '';
-    const url = new URL(baseCardsUrl);
+    const baseUrl = `${window.location.origin}${'{{ collection.url }}'}`;
+    const url = new URL(baseUrl);
     url.searchParams.set('page', page);
     if (door) url.searchParams.set('door_type', door);
-    url.searchParams.set('gid', '{{ ai_gen_id }}');
     return fetchHTML(url.toString());
   }
   function appendCardsFromHTML(html){
