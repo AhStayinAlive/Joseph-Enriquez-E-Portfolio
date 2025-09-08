@@ -1,0 +1,1084 @@
+{% comment %}
+  Broen – Smart Locks Collection Template
+  Fix pack:
+  • Use real {{ section.id }} and {{ section.shopify_attributes }}
+  • Unpaginate: fetch & append page=2,3,… via section rendering until no new cards
+  • Keep desktop hover videos + mobile tap videos, wired for newly appended cards
+{% endcomment %}
+
+{%- assign ai_gen_id = section.id | default: block.id | replace: '_', '' | downcase -%}
+
+{% style %}
+  /* ================================
+  Broen – Smart Locks (Glass UI)
+  ================================ */
+
+  .broen-collection-{{ ai_gen_id }}{
+    /* Global glass tokens (cards etc.) */
+    --glass-bg: rgba(255,255,255,.90);
+    --glass-bg-strong: rgba(255,255,255,.95);
+    --glass-border: rgba(255,255,255,.24);
+    --glass-highlight: rgba(255,255,255,.45);
+    --glass-shadow: rgba(0,0,0,.28);
+    --glass-blur: 20px;
+    --glass-saturate: 180%;
+
+    background: linear-gradient(135deg, {{ block.settings.bg_gradient_start }} 0%, {{ block.settings.bg_gradient_end }} 100%);
+    min-height: 100vh;
+    color: {{ block.settings.text_primary }};
+    font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    line-height: 1.5;
+  }
+
+  .broen-header-{{ ai_gen_id }}{
+    position: static;
+    z-index: {{ block.settings.header_z_index | default: 50 }};
+    padding-top: {{ block.settings.header_padding_top | default: 32 }}px;
+    padding-bottom: {{ block.settings.header_padding_bottom | default: 8 }}px;
+  }
+
+  /* Proper header stacking behavior */
+  html.broen-stack-active .section-header.shopify-section-header-hidden{
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  .broen-container-{{ ai_gen_id }}{
+    max-width: {{ block.settings.container_max_width }}px;
+    margin: 0 auto;
+    padding: 0 {{ block.settings.container_padding }}px;
+    overflow: visible;
+  }
+
+  .broen-title-{{ ai_gen_id }}{
+    font: 700 {{ block.settings.title_size }}px/1.1 -apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;
+    margin: 0 0 {{ block.settings.title_margin }}px;
+    text-align: center;
+    color: {{ block.settings.text_primary }};
+    letter-spacing: -0.03em;
+  }
+  .broen-subtitle-{{ ai_gen_id }}{
+    font: 500 {{ block.settings.subtitle_size }}px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    color: {{ block.settings.text_secondary }};
+    text-align: center;
+    margin: 0 0 {{ block.settings.subtitle_margin }}px;
+    opacity: .85;
+  }
+
+  /* ===== Sticky filter bar ===== */
+  .broen-filter-bar-{{ ai_gen_id }}{
+    position: sticky;
+    top: 80px;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+
+    --pill-blur: 24px;
+    --pill-saturate: 200%;
+    --pill-bg: rgba(255,255,255,.22);
+    --pill-bg-strong: rgba(255,255,255,.30);
+    --pill-bg-scrolled: rgba(255,255,255,.36);
+    --pill-border: rgba(0,0,0,.10);
+    --pill-highlight: rgba(255,255,255,.60);
+    --pill-shadow: rgba(0,0,0,.10);
+
+    backdrop-filter: saturate(var(--pill-saturate)) blur(var(--pill-blur));
+    -webkit-backdrop-filter: saturate(var(--pill-saturate)) blur(var(--pill-blur));
+    background: var(--pill-bg);
+    border: 0;
+    border-bottom: 1px solid var(--pill-border);
+    box-shadow: 0 8px 24px var(--pill-shadow);
+    padding-top: 20px;
+    padding-bottom: 8px;
+    transition: background .2s ease, box-shadow .2s ease;
+    z-index: 1;
+  }
+  .broen-filter-bar-{{ ai_gen_id }}.past-section{ position: static; visibility: hidden; opacity: 0; pointer-events: none; }
+
+  .broen-filter-bar__inner-{{ ai_gen_id }}{
+    max-width: {{ block.settings.container_max_width }}px; margin: 0 auto;
+    padding-left: {{ block.settings.container_padding }}px;
+    padding-right: {{ block.settings.container_padding }}px;
+    padding-top: {{ block.settings.header_padding_y | divided_by: 2 }}px;
+    padding-bottom: {{ block.settings.header_padding_y | divided_by: 2 }}px;
+  }
+
+  .broen-filters-{{ ai_gen_id }}{
+    margin: 0 !important; padding: 0 !important; background: transparent; border: 0;
+    display: flex; flex-wrap: wrap;
+    gap: {{ block.settings.filter_row_gap | default: block.settings.filter_gap }}px
+         {{ block.settings.filter_col_gap | default: block.settings.filter_gap }}px;
+    justify-content: {% if block.settings.filter_align == 'start' %}flex-start{% else %}center{% endif %};
+  }
+
+  .broen-filter-btn-{{ ai_gen_id }}{
+    position: relative; overflow: hidden; isolation: isolate;
+    border-radius: {{ block.settings.filter_border_radius }}px;
+    padding: {{ block.settings.filter_padding_y }}px {{ block.settings.filter_padding_x }}px;
+    border: 1px solid var(--pill-border);
+    color: {{ block.settings.text_primary }};
+    text-decoration: none;
+    backdrop-filter: saturate(var(--pill-saturate)) blur(calc(var(--pill-blur) * 1.15));
+    -webkit-backdrop-filter: saturate(var(--pill-saturate)) blur(calc(var(--pill-blur) * 1.15));
+    background: var(--pill-bg-strong);
+    box-shadow: inset 0 .5px 0 var(--pill-highlight), inset 0 -1px 0 rgba(0,0,0,.10), 0 8px 20px var(--pill-shadow);
+    transition: transform .2s, background .2s, box-shadow .2s;
+    font-size: {{ block.settings.filter_font_size }}px;
+    font-weight: {{ block.settings.filter_font_weight }};
+    white-space: nowrap;
+  }
+  .broen-filter-btn-{{ ai_gen_id }}:hover{
+    transform: translateY(-1px);
+    background: var(--pill-bg-scrolled);
+    box-shadow: inset 0 .5px 0 var(--pill-highlight), 0 10px 24px rgba(0,0,0,.14);
+  }
+  .broen-filter-btn-{{ ai_gen_id }}::before,
+  .broen-filter-btn-{{ ai_gen_id }}::after{ content: none !important; }
+
+  .broen-filter-btn-{{ ai_gen_id }}.active{
+    background:
+      linear-gradient(0deg,
+        rgba({{ block.settings.accent_primary | color_extract: 'red' }},{{ block.settings.accent_primary | color_extract: 'green' }},{{ block.settings.accent_primary | color_extract: 'blue' }}, .18),
+        rgba({{ block.settings.accent_primary | color_extract: 'red' }},{{ block.settings.accent_primary | color_extract: 'green' }},{{ block.settings.accent_primary | color_extract: 'blue' }}, .18)
+      ),
+      var(--pill-bg-strong);
+    color: {{ block.settings.active_filter_text }};
+    border-color: rgba(0,0,0,.14);
+    font-weight: 600;
+    transform: translateY(-1px);
+    box-shadow: inset 0 .5px 0 var(--pill-highlight), 0 10px 24px rgba(0,0,0,.18);
+  }
+
+  .broen-grid-{{ ai_gen_id }}{
+    display:grid; grid-template-columns: repeat(auto-fill, minmax({{ block.settings.card_min_width }}px, 1fr));
+    gap: {{ block.settings.grid_gap_desktop }}px; padding: {{ block.settings.grid_padding_top }}px 0 {{ block.settings.grid_padding_bottom }}px;
+  }
+
+  .broen-card-{{ ai_gen_id }}{
+    position:relative; isolation:isolate; overflow:hidden; border-radius: {{ block.settings.card_radius }}px;
+    border: 1px solid rgba(0,0,0,.08);
+    backdrop-filter:saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    -webkit-backdrop-filter:saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    background: var(--glass-bg);
+    box-shadow: inset 0 .5px 0 rgba(255,255,255,.8), inset 0 -1px 0 rgba(0,0,0,.05), 0 8px 20px rgba(0,0,0,.1);
+    transition: transform .3s cubic-bezier(.25,.46,.45,.94), box-shadow .3s;
+  }
+  .broen-card-{{ ai_gen_id }}::before{
+    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background: linear-gradient(to bottom, rgba(255,255,255,.3), rgba(255,255,255,0) 42%); mix-blend-mode: overlay; opacity:.6;
+  }
+  .broen-card-{{ ai_gen_id }}:hover{
+    transform: translateY(-{{ block.settings.card_hover_lift }}px);
+    box-shadow: 0 {{ block.settings.card_shadow_y }}px {{ block.settings.card_shadow_blur }}px rgba(0,0,0,{{ block.settings.card_shadow_opacity | divided_by: 100.0 }}), 0 2px 0 rgba(255,255,255,.05) inset;
+    border-color: rgba({{ block.settings.border_muted | color_extract: 'red' }}, {{ block.settings.border_muted | color_extract: 'green' }}, {{ block.settings.border_muted | color_extract: 'blue' }}, .3);
+  }
+
+  .broen-card-image-{{ ai_gen_id }}{ aspect-ratio:1; overflow:hidden; position:relative; background: rgba({{ block.settings.surface_card | color_extract: 'red' }}, {{ block.settings.surface_card | color_extract: 'green' }}, {{ block.settings.surface_card | color_extract: 'blue' }}, .3); }
+  .broen-card-image-{{ ai_gen_id }} img,
+  .broen-card-image-{{ ai_gen_id }} video{ width:100%; height:100%; object-fit:cover; transition: transform .4s cubic-bezier(.25,.46,.45,.94); }
+  .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }} img,
+  .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }} video{ transform: scale({{ block.settings.image_hover_scale | divided_by: 100.0 }}); }
+
+  .broen-card-image-{{ ai_gen_id }}.has-hover-video img,
+  .broen-card-image-{{ ai_gen_id }}.has-hover-video video{ position:absolute; inset:0; }
+  .broen-card-image-{{ ai_gen_id }}.has-hover-video video{ opacity:0; visibility:hidden; transition:opacity .2s ease; }
+  .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }}.has-hover-video video{ opacity:1; visibility:visible; }
+  .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }}.has-hover-video img{ opacity:0; visibility:hidden; }
+
+  .broen-card-content-{{ ai_gen_id }}{ padding: {{ block.settings.card_padding }}px; position: relative; }
+  .broen-card-title-container-{{ ai_gen_id }}{ position:relative; margin:0 0 {{ block.settings.card_title_margin }}px; }
+  .broen-card-title-{{ ai_gen_id }}{
+    margin:0; color: {{ block.settings.text_primary }};
+    font: 600 {{ block.settings.card_title_size }}px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .broen-card-title-{{ ai_gen_id }} a{ color:inherit; text-decoration:none; transition:opacity .2s; }
+  .broen-card-title-{{ ai_gen_id }} a:hover{ opacity:.75; }
+
+  .broen-door-classification-{{ ai_gen_id }},
+  .broen-door-classification-placeholder-{{ ai_gen_id }}{
+    position:absolute; right:{{ block.settings.card_padding | default: 20 }}px; top:{{ block.settings.card_padding | default: 20 }}px; margin:0; white-space:nowrap;
+    padding: {{ block.settings.classification_padding_y }}px {{ block.settings.classification_padding_x }}px;
+    font: 500 {{ block.settings.classification_font_size }}px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    letter-spacing:.3px; border-radius: {{ block.settings.classification_border_radius }}px;
+    border: 1px solid rgba(0,0,0,.08);
+    backdrop-filter:saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    -webkit-backdrop-filter:saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    background: rgba(255,255,255,.95);
+    color: {{ block.settings.classification_text_color }};
+    box-shadow: inset 0 .5px 0 rgba(255,255,255,.8), inset 0 -1px 0 rgba(0,0,0,.05), 0 8px 20px rgba(0,0,0,.1);
+    pointer-events: none;
+  }
+  .broen-door-classification-placeholder-{{ ai_gen_id }}{
+    background: rgba({{ block.settings.text_secondary | color_extract: 'red' }}, {{ block.settings.text_secondary | color_extract: 'green' }}, {{ block.settings.text_secondary | color_extract: 'blue' }}, .15);
+    color: {{ block.settings.text_secondary }};
+    border-color: rgba({{ block.settings.text_secondary | color_extract: 'red' }}, {{ block.settings.text_secondary | color_extract: 'green' }}, {{ block.settings.text_secondary | color_extract: 'blue' }}, .2);
+    font-weight:400;
+  }
+
+  .broen-door-classification-inline-{{ ai_gen_id }}{
+    display: none;
+    margin: 10px 0 8px;
+    padding: {{ block.settings.classification_padding_y }}px {{ block.settings.classification_padding_x }}px;
+    font: 500 {{ block.settings.classification_font_size }}px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    border-radius: {{ block.settings.classification_border_radius }}px;
+    border: 1px solid rgba(0,0,0,.08);
+    backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    background: rgba(255,255,255,.95);
+    color: {{ block.settings.classification_text_color }};
+    box-shadow: inset 0 .5px 0 rgba(255,255,255,.8), 0 8px 20px rgba(0,0,0,.1);
+  }
+
+  .broen-price-{{ ai_gen_id }}{ margin: {{ block.settings.price_margin }}px 0; display:flex; align-items:baseline; gap:8px; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; }
+  .broen-current-price-{{ ai_gen_id }}{ font-size: {{ block.settings.price_size }}px; font-weight:600; letter-spacing:-.01em; color: {{ block.settings.text_primary }}; }
+  .broen-compare-price-{{ ai_gen_id }}{ font-size: {{ block.settings.compare_price_size }}px; color: {{ block.settings.text_secondary }}; text-decoration: line-through; opacity:.7; }
+
+  .broen-actions-{{ ai_gen_id }}{ display:flex; gap: {{ block.settings.action_gap }}px; margin-top: {{ block.settings.action_margin_top }}px; }
+
+  .broen-btn-{{ ai_gen_id }}{
+    flex:1; min-height:44px;
+    padding: {{ block.settings.btn_padding_y }}px {{ block.settings.btn_padding_x }}px;
+    border-radius: {{ block.settings.btn_border_radius }}px;
+    border:1px solid var(--glass-border);
+    text-decoration:none; text-align:center; cursor:pointer; user-select:none;
+    display:inline-flex; align-items:center; justify-content:center; gap:.5ch;
+    font: 600 {{ block.settings.btn_font_size }}px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif;
+    letter-spacing: -.01em;
+
+    color: {{ block.settings.text_primary }};
+    background: linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,.18));
+    backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    box-shadow: 0 8px 20px var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,.12);
+    transition: transform .2s, box-shadow .2s, background .2s, filter .2s;
+  }
+  .broen-btn-{{ ai_gen_id }}:hover{
+    transform: translateY(-1px);
+    background: linear-gradient(0deg, rgba(255,255,255,.24), rgba(255,255,255,.24));
+    box-shadow: 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.14);
+  }
+  .broen-btn-{{ ai_gen_id }}:active{ transform:none; box-shadow: 0 4px 12px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.10); }
+  .broen-btn-{{ ai_gen_id }}:focus-visible{ outline:3px solid rgba(255,255,255,.5); outline-offset:2px; }
+  .broen-btn-primary-{{ ai_gen_id }}:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+  .broen-btn-primary-{{ ai_gen_id }}.loading{ opacity:.7; cursor:wait; }
+
+  .broen-btn-secondary-{{ ai_gen_id }}{
+    color:#fff !important;
+    background: linear-gradient(180deg, rgba(10,132,255,.95), rgba(10,132,255,.82)) !important;
+    border-color: rgba(255,255,255,.35) !important;
+    text-shadow: 0 0 1px rgba(0,0,0,.12);
+    box-shadow: 0 10px 24px rgba(10,132,255,.35), inset 0 1px 0 rgba(255,255,255,.25) !important;
+  }
+  .broen-btn-secondary-{{ ai_gen_id }}:hover{ background: linear-gradient(180deg, rgba(10,132,255,1), rgba(10,132,255,.9)) !important; }
+
+  .broen-empty-state-{{ ai_gen_id }}{ text-align:center; padding: {{ block.settings.empty_state_padding }}px 20px; color: {{ block.settings.text_secondary }}; grid-column:1/-1; }
+  .broen-empty-state-{{ ai_gen_id }} h3{ font:600 {{ block.settings.empty_title_size }}px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif; margin:0 0 8px; color: {{ block.settings.text_primary }}; }
+  .broen-empty-state-{{ ai_gen_id }} p{ font-size: {{ block.settings.empty_text_size }}px; margin:0; opacity:.8; }
+
+  @supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)){
+    .broen-card-{{ ai_gen_id }}{ background: rgba(255,255,255,.90) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .broen-filter-bar-{{ ai_gen_id }}{ background: rgba(255,255,255,.90) !important; }
+    .broen-filter-btn-{{ ai_gen_id }}, .broen-btn-{{ ai_gen_id }}{
+      background: rgba(255,255,255,.14) !important; box-shadow: 0 8px 20px rgba(0,0,0,.25);
+      -webkit-backdrop-filter: none; backdrop-filter: none; color: {{ block.settings.text_primary }};
+    }
+    .broen-door-classification-{{ ai_gen_id }}, .broen-door-classification-placeholder-{{ ai_gen_id }}{
+      background: rgba(255,255,255,.95) !important; -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce){
+    .broen-card-{{ ai_gen_id }}, .broen-filter-btn-{{ ai_gen_id }}, .broen-btn-{{ ai_gen_id }}{ backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+    .broen-card-{{ ai_gen_id }}{ background: rgba(255,255,255,.90) !important; }
+    .broen-filter-bar-{{ ai_gen_id }}{ background: rgba(255,255,255,.86) !important; }
+    .broen-filter-btn-{{ ai_gen_id }}, .broen-btn-{{ ai_gen_id }}{ background: rgba(255,255,255,.12) !important; }
+  }
+
+  @media (max-width: {{ block.settings.mobile_breakpoint }}px){
+    .broen-header-{{ ai_gen_id }}{
+      padding-top: {{ block.settings.header_padding_top | default: 32 | times: 0.7 }}px;
+      padding-bottom: {{ block.settings.header_padding_bottom | default: 8 | times: 0.7 }}px;
+    }
+    .broen-grid-{{ ai_gen_id }}{ grid-template-columns:1fr 1fr; gap: {{ block.settings.grid_gap_mobile }}px; }
+    .broen-title-{{ ai_gen_id }}{ font-size: {{ block.settings.title_size | times: 0.8 }}px; }
+    .broen-subtitle-{{ ai_gen_id }}{ font-size: {{ block.settings.subtitle_size | times: 0.9 }}px; }
+
+    {% assign _row_gap = block.settings.filter_row_gap | default: block.settings.filter_gap %}
+    {% assign _col_gap = block.settings.filter_col_gap | default: block.settings.filter_gap %}
+
+    .broen-filters-{{ ai_gen_id }}{
+      {% if block.settings.filter_mobile_wrap %}
+        flex-wrap: wrap;
+        overflow-x: visible;
+        margin-left: 0;
+        margin-right: 0;
+        padding: 0;
+        gap: 0 {{ _col_gap | times: 0.8 }}px;
+      {% else %}
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0 {{ block.settings.container_padding }}px 6px;
+        margin-left: calc(-1 * {{ block.settings.container_padding }}px);
+        margin-right: calc(-1 * {{ block.settings.container_padding }}px);
+        scroll-snap-type: x proximity;
+        gap: {{ _row_gap | times: 0.8 }}px {{ _col_gap | times: 0.8 }}px;
+      {% endif %}
+      justify-content: {% if block.settings.filter_align == 'start' %}flex-start{% else %}center{% endif %};
+    }
+    .broen-filter-btn-{{ ai_gen_id }}{
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+      padding: {{ block.settings.filter_padding_y | times: 0.8 }}px {{ block.settings.filter_padding_x | times: 0.8 }}px;
+      font-size: {{ block.settings.filter_font_size | times: 0.9 }}px;
+      border-radius: {{ block.settings.filter_border_radius | times: 0.85 }}px;
+      box-shadow: inset 0 .5px 0 var(--pill-highlight), inset 0 -1px 0 rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.12);
+    }
+    .broen-filter-btn-{{ ai_gen_id }}:hover{ transform:none; }
+
+    .broen-card-content-{{ ai_gen_id }}{ padding: {{ block.settings.card_padding | times: 0.8 }}px; }
+    .broen-card-title-{{ ai_gen_id }}{ font-size: {{ block.settings.card_title_size | times: 0.9 }}px; }
+
+    .broen-door-classification-{{ ai_gen_id }}, .broen-door-classification-placeholder-{{ ai_gen_id }}{ display: none !important; }
+    .broen-door-classification-inline-{{ ai_gen_id }}{ display: inline-flex; align-self: flex-start; }
+
+    .broen-filter-bar-{{ ai_gen_id }}{
+      top: calc(var(--header-height, 64px) + env(safe-area-inset-top, 0px));
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    .broen-filter-bar__inner-{{ ai_gen_id }}{
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
+    .broen-actions-{{ ai_gen_id }}{ flex-direction:column; gap: {{ block.settings.action_gap | times: 0.7 }}px; }
+    .broen-btn-{{ ai_gen_id }}{ padding: {{ block.settings.btn_padding_y | times: 0.8 }}px {{ block.settings.btn_padding_x | times: 0.8 }}px; font-size: {{ block.settings.btn_font_size | times: 0.9 }}px; }
+  }
+
+  @media (max-width:1024px) and (min-width: {{ block.settings.mobile_breakpoint | plus: 1 }}px){
+    .broen-grid-{{ ai_gen_id }}{ grid-template-columns: repeat(auto-fill, minmax({{ block.settings.card_min_width | times: 0.9 }}px, 1fr)); }
+  }
+
+  .scrolled-past-header .broen-filter-bar-{{ ai_gen_id }}{
+    background: var(--pill-bg-scrolled);
+    box-shadow: 0 10px 28px var(--pill-shadow);
+    border-bottom-color: rgba(0,0,0,.14);
+  }
+
+  /* Desktop-only hover & Touch-only .mobile-active control */
+  @media (hover: hover) and (pointer: fine) {
+    .broen-card-{{ ai_gen_id }}:hover{
+      transform: translateY(-{{ block.settings.card_hover_lift }}px);
+      box-shadow: 0 {{ block.settings.card_shadow_y }}px {{ block.settings.card_shadow_blur }}px rgba(0,0,0,{{ block.settings.card_shadow_opacity | divided_by: 100.0 }}), 0 2px 0 rgba(255,255,255,.05) inset;
+      border-color: rgba({{ block.settings.border_muted | color_extract: 'red' }}, {{ block.settings.border_muted | color_extract: 'green' }}, {{ block.settings.border_muted | color_extract: 'blue' }}, .3);
+    }
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }} img,
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }} video{
+      transform: scale({{ block.settings.image_hover_scale | divided_by: 100.0 }});
+    }
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }}.has-hover-video video{ opacity:1; visibility:visible; }
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }}.has-hover-video img{ opacity:0; visibility:hidden; }
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .broen-card-{{ ai_gen_id }}:hover{
+      transform: none !important;
+      box-shadow: inset 0 .5px 0 rgba(255,255,255,.8), inset 0 -1px 0 rgba(0,0,0,.05), 0 8px 20px rgba(0,0,0,.1) !important;
+      border-color: rgba(0,0,0,.08) !important;
+    }
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }} img,
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }} video{ transform: none !important; }
+    .broen-card-{{ ai_gen_id }} .broen-card-image-{{ ai_gen_id }}.has-hover-video video{ opacity:0 !important; visibility:hidden !important; }
+    .broen-card-{{ ai_gen_id }} .broen-card-image-{{ ai_gen_id }}.has-hover-video img{ opacity:1 !important; visibility:visible !important; }
+
+    .broen-card-{{ ai_gen_id }}.mobile-active{
+      transform: translateY(-{{ block.settings.card_hover_lift }}px) !important;
+      box-shadow: 0 {{ block.settings.card_shadow_y }}px {{ block.settings.card_shadow_blur }}px rgba(0,0,0,{{ block.settings.card_shadow_opacity | divided_by: 100.0 }}), 0 2px 0 rgba(255,255,255,.05) inset !important;
+      border-color: rgba({{ block.settings.border_muted | color_extract: 'red' }}, {{ block.settings.border_muted | color_extract: 'green' }}, {{ block.settings.border_muted | color_extract: 'blue' }}, .3) !important;
+    }
+    .broen-card-{{ ai_gen_id }}.mobile-active .broen-card-image-{{ ai_gen_id }} img,
+    .broen-card-{{ ai_gen_id }}.mobile-active .broen-card-image-{{ ai_gen_id }} video{
+      transform: scale({{ block.settings.image_hover_scale | divided_by: 100.0 }}) !important;
+    }
+    .broen-card-{{ ai_gen_id }}.mobile-active .broen-card-image-{{ ai_gen_id }}.has-hover-video video{ opacity:1 !important; visibility:visible !important; }
+    .broen-card-{{ ai_gen_id }}.mobile-active .broen-card-image-{{ ai_gen_id }}.has-hover-video img{ opacity:0 !important; visibility:hidden !important; }
+
+    .broen-filter-btn-{{ ai_gen_id }}:hover,
+    .broen-btn-{{ ai_gen_id }}:hover{ transform:none !important; }
+  }
+
+  .broen-card-image-{{ ai_gen_id }}.has-video img,
+  .broen-card-image-{{ ai_gen_id }}.has-video video{ position:absolute; inset:0; }
+  .broen-card-image-{{ ai_gen_id }}.has-video video{ opacity:0; visibility:hidden; transition:opacity .2s ease; }
+  .broen-card-image-{{ ai_gen_id }}.has-video img{ opacity:1; visibility:visible; }
+
+  @media (hover: hover) and (pointer: fine){
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }}.has-video.video-ready video{ opacity:1 !important; visibility:visible !important; }
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }}.has-video.video-ready img{ opacity:0 !important; visibility:hidden !important; }
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }}.has-video:not(.video-ready) video{ opacity:0 !important; visibility:hidden !important; }
+    .broen-card-{{ ai_gen_id }}:hover .broen-card-image-{{ ai_gen_id }}.has-video:not(.video-ready) img{ opacity:1 !important; visibility:visible !important; }
+  }
+
+  @media (hover: none), (pointer: coarse){
+    .broen-card-{{ ai_gen_id }}.mobile-active .broen-card-image-{{ ai_gen_id }}.has-video.video-ready video{ opacity:1 !important; visibility:visible !important; }
+    .broen-card-{{ ai_gen_id }}.mobile-active .broen-card-image-{{ ai_gen_id }}.has-video.video-ready img{ opacity:0 !important; visibility:hidden !important; }
+    .broen-card-{{ ai_gen_id }}.mobile-active .broen-card-image-{{ ai_gen_id }}.has-video:not(.video-ready) video{ opacity:0 !important; visibility:hidden !important; }
+    .broen-card-{{ ai_gen_id }}.mobile-active .broen-card-image-{{ ai_gen_id }}.has-video:not(.video-ready) img{ opacity:1 !important; visibility:visible !important; }
+  }
+{% endstyle %}
+
+<section class="broen-collection-{{ ai_gen_id }}" {{ section.shopify_attributes }}>
+  <header class="broen-header-{{ ai_gen_id }}">
+    <div class="broen-container-{{ ai_gen_id }}">
+      {% if block.settings.title != blank %}
+        <h1 class="broen-title-{{ ai_gen_id }}">{{ block.settings.title }}</h1>
+      {% endif %}
+      {% if block.settings.subtitle != blank %}
+        <p class="broen-subtitle-{{ ai_gen_id }}">{{ block.settings.subtitle }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="broen-container-{{ ai_gen_id }}">
+    <!-- Sticky filter bar -->
+    <div class="broen-filter-bar-{{ ai_gen_id }}" id="broen-filter-bar-{{ ai_gen_id }}">
+      <div class="broen-filter-bar__inner-{{ ai_gen_id }}">
+        <nav class="broen-filters-{{ ai_gen_id }}" role="navigation" aria-label="Filter products by door type">
+          <a href="?door_type="
+             class="broen-filter-btn-{{ ai_gen_id }} {% unless request.query_parameters.door_type %}active{% endunless %}"
+             data-filter=""
+             {% unless request.query_parameters.door_type %}aria-current="true"{% endunless %}>
+            {{ block.settings.filter_all_text }}
+          </a>
+
+          {%- assign custom_filters_lines = block.settings.filter_buttons_custom | default: '' | newline_to_br | split: '<br />' -%}
+          {%- for line in custom_filters_lines -%}
+            {%- assign ln = line | strip -%}
+            {%- if ln != '' -%}
+              {%- assign pair = ln | split: '|' -%}
+              {%- assign label_raw = pair[0] | strip -%}
+              {%- assign slug_raw  = pair[1] | default: label_raw | strip -%}
+              {%- assign label = label_raw -%}
+              {%- assign slug  = slug_raw  | handleize -%}
+              <a href="?door_type={{ slug }}"
+                 class="broen-filter-btn-{{ ai_gen_id }} {% if request.query_parameters.door_type == slug %}active{% endif %}"
+                 data-filter="{{ slug }}"
+                 {% if request.query_parameters.door_type == slug %}aria-current="true{% endif %}">
+                {{ label }}
+              </a>
+            {%- endif -%}
+          {%- endfor -%}
+        </nav>
+      </div>
+    </div>
+
+    <div class="broen-grid-{{ ai_gen_id }}"
+         id="broen-grid-{{ ai_gen_id }}"
+         data-col-handle="{{ collection.handle }}"
+         data-section-id="{{ section.id }}">
+      {%- assign current_filter = request.query_parameters.door_type | default: '' -%}
+      {%- assign shown = 0 -%}
+
+      {%- for product in collection.products -%}
+        {%- assign door_mf = product.metafields.custom.door_type -%}
+        {%- if door_mf == blank -%}{%- assign door_mf = product.metafields['custom']['door_type'] -%}{%- endif -%}
+        {%- if door_mf == blank -%}{%- assign door_type_raw = '' -%}{%- else -%}
+          {%- if door_mf.value != blank -%}{%- assign door_type_raw = door_mf.value -%}{%- else -%}{%- assign door_type_raw = door_mf -%}{%- endif -%}
+        {%- endif -%}
+
+        {%- assign door_type_slug = door_type_raw | default: 'unassigned' | handleize -%}
+        {%- if current_filter != '' and current_filter != door_type_slug -%}{%- continue -%}{%- endif -%}
+        {%- assign shown = shown | plus: 1 -%}
+
+        {%- assign hero_media = product.metafields.custom.video -%}
+        {%- assign product_media_type   = product.metafields.custom.media_type | default: 'image' -%}
+        {%- assign product_video_media  = product.metafields.custom.product_video -%}
+        {%- assign product_video_poster = product.metafields.custom.video_poster_image -%}
+        {%- assign product_video_hover  = product.metafields.custom.video_hover_only -%}
+        {%- if product_video_hover == blank -%}{% assign product_video_hover = true %}{%- endif -%}
+
+        {% assign pv_url = '' %}
+        {% if product_video_media != blank %}
+          {% assign pv_url = product_video_media | file_url %}
+          {% if pv_url == blank and product_video_media.url %}{% assign pv_url = product_video_media.url %}{% endif %}
+        {% endif %}
+
+        {%- comment -%} *** Liquid-safe boolean: has video (no parentheses needed) *** {%- endcomment -%}
+        {% assign _has_video = false %}
+        {% if hero_media != blank %}
+          {% assign _has_video = true %}
+        {% endif %}
+        {% if _has_video == false and product_media_type == 'video' and pv_url != '' %}
+          {% assign _has_video = true %}
+        {% endif %}
+
+        <article class="broen-card-{{ ai_gen_id }}" data-door-type="{{ door_type_slug }}" data-product-id="{{ product.id }}">
+          <div class="broen-card-image-{{ ai_gen_id }} {% if _has_video %}has-video{% endif %} {% if hero_media != blank %}has-hover-video{% endif %}">
+            {% if product.featured_image %}
+              <img
+                src="{{ product.featured_image | image_url: width: 400 }}"
+                srcset="{{ product.featured_image | image_url: width: 200 }} 200w,
+                        {{ product.featured_image | image_url: width: 400 }} 400w,
+                        {{ product.featured_image | image_url: width: 600 }} 600w,
+                        {{ product.featured_image | image_url: width: 800 }} 800w"
+                sizes="(max-width: {{ block.settings.mobile_breakpoint }}px) 50vw,
+                      (max-width: 1024px) 33vw,
+                      {{ block.settings.card_min_width }}px"
+                alt="{{ product.featured_image.alt | default: product.title | escape }}"
+                loading="lazy" width="400" height="400">
+            {% else %}
+              <div class="broen-card-image-placeholder-{{ ai_gen_id }}">
+                {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+              </div>
+            {% endif %}
+
+            {% if hero_media != blank %}
+              {% assign hero_url  = hero_media | file_url %}
+              {% assign hero_path = hero_url | split:'?' | first | split:'#' | first %}
+              {% assign hero_ext  = hero_path | split:'.' | last | downcase %}
+
+              <video
+                class="broen-product-video-{{ ai_gen_id }} broen-hero-video"
+                {% if product_video_poster %}poster="{{ product_video_poster | image_url: width: 600 }}"{% elsif product.featured_image %}poster="{{ product.featured_image | image_url: width: 600 }}"{% endif %}
+                muted playsinline loop preload="metadata" width="400" height="400"
+                aria-hidden="true" data-hover-only="true" data-autoplay="false">
+                {% if hero_ext == 'mp4' %}<source src="{{ hero_url }}" type="video/mp4">{% endif %}
+                {% if hero_ext == 'webm' %}<source src="{{ hero_url }}" type="video/webm">{% endif %}
+                {% unless hero_ext == 'mp4' or hero_ext == 'webm' %}<source src="{{ hero_url }}">{% endunless %}
+              </video>
+            {% elsif product_media_type == 'video' and pv_url != '' %}
+              {% assign pv_path = pv_url | split:'?' | first | split:'#' | first %}
+              {% assign pv_ext  = pv_path | split:'.' | last | downcase %}
+              <video
+                class="broen-product-video-{{ ai_gen_id }}"
+                poster="{% if product_video_poster %}{{ product_video_poster | image_url: width: 600 }}{% elsif product.featured_image %}{{ product.featured_image | image_url: width: 600 }}{% endif %}"
+                muted loop playsinline preload="metadata" width="400" height="400"
+                data-hover-only="{{ product_video_hover }}"
+                data-autoplay="{% unless product_video_hover %}true{% else %}false{% endunless %}"
+                data-product-id="{{ product.id }}">
+                {% if pv_ext == 'mp4' %}<source src="{{ pv_url }}" type="video/mp4">{% endif %}
+                {% if pv_ext == 'webm' %}<source src="{{ pv_url }}" type="video/webm">{% endif %}
+                {% unless pv_ext == 'mp4' or pv_ext == 'webm' %}<source src="{{ pv_url }}">{% endunless %}
+              </video>
+            {% endif %}
+
+            {% if door_type_slug == 'unassigned' %}
+              <div class="broen-door-classification-placeholder-{{ ai_gen_id }}">{{ block.settings.classification_placeholder_text }}</div>
+            {% else %}
+              {% assign door_label = door_type_slug | replace: '-', ' ' | capitalize %}
+              <div class="broen-door-classification-{{ ai_gen_id }}">{{ door_label }}</div>
+            {% endif %}
+          </div>
+
+          <div class="broen-card-content-{{ ai_gen_id }}">
+            <div class="broen-card-title-container-{{ ai_gen_id }}">
+              <h3 class="broen-card-title-{{ ai_gen_id }}">
+                <a href="{{ product.url }}" aria-label="View {{ product.title | escape }}">
+                  {{ product.title | truncate: block.settings.title_truncate }}
+                </a>
+              </h3>
+            </div>
+
+            <div class="broen-price-{{ ai_gen_id }}">
+              {% if product.compare_at_price > product.price %}
+                <span class="broen-compare-price-{{ ai_gen_id }}">{{ product.compare_at_price | money }}</span>
+              {% endif %}
+              <span class="broen-current-price-{{ ai_gen_id }}">{{ product.price | money }}</span>
+            </div>
+
+            {% if door_type_slug == 'unassigned' %}
+              <div class="broen-door-classification-inline-{{ ai_gen_id }}">{{ block.settings.classification_placeholder_text }}</div>
+            {% else %}
+              {% assign door_label_inline = door_type_slug | replace: '-', ' ' | capitalize %}
+              <div class="broen-door-classification-inline-{{ ai_gen_id }}">{{ door_label_inline }}</div>
+            {% endif %}
+
+            <div class="broen-actions-{{ ai_gen_id }}">
+              <button 
+                class="broen-btn-{{ ai_gen_id }} broen-btn-primary-{{ ai_gen_id }} broen-atc-btn"
+                data-product-id="{{ product.id }}"
+                data-variant-id="{{ product.selected_or_first_available_variant.id }}"
+                data-variant-available="{{ product.selected_or_first_available_variant.available }}"
+                aria-label="Add {{ product.title | escape }} to cart"
+                {% unless product.selected_or_first_available_variant.available %}disabled{% endunless %}>
+                {% if product.selected_or_first_available_variant.available %}
+                  {{ block.settings.atc_text }}
+                {% else %}
+                  {{ block.settings.sold_out_text }}
+                {% endif %}
+              </button>
+              <a href="{{ product.url }}" class="broen-btn-{{ ai_gen_id }} broen-btn-secondary-{{ ai_gen_id }}" aria-label="Buy {{ product.title | escape }} now">
+                {{ block.settings.buy_now_text }}
+              </a>
+            </div>
+          </div>
+        </article>
+      {%- endfor -%}
+    </div>
+
+    <div id="broen-empty-{{ ai_gen_id }}" class="broen-empty-state-{{ ai_gen_id }}" style="{% if shown > 0 %}display:none{% endif %}">
+      <h3>{{ block.settings.empty_title }}</h3>
+      <p>{{ block.settings.empty_message }}</p>
+    </div>
+  </main>
+</section>
+
+<script>
+(function() {
+  'use strict';
+  const root = document.querySelector('.broen-collection-{{ ai_gen_id }}');
+  if (!root) return;
+
+  const grid = root.querySelector('#broen-grid-{{ ai_gen_id }}');
+  const filterBar = root.querySelector('#broen-filter-bar-{{ ai_gen_id }}');
+  const filterNav = root.querySelector('.broen-filters-{{ ai_gen_id }}');
+  const emptyEl = root.querySelector('#broen-empty-{{ ai_gen_id }}');
+  const sectionId = grid?.dataset.sectionId;
+  const basePath  = window.location.pathname;
+
+  let cards = Array.from(grid.querySelectorAll('.broen-card-{{ ai_gen_id }}'));
+  let seen = new Set(cards.map(c => c.getAttribute('data-product-id') || ''));
+
+  /* ---------- Header height tokens ---------- */
+  function setHeaderHeight() {
+    const header = document.querySelector('.section-header .header');
+    if (header) document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`);
+  }
+  setHeaderHeight();
+  window.addEventListener('resize', setHeaderHeight);
+
+  function computeHeaderHeight() {
+    const cands = [
+      document.querySelector('.shopify-section-header'),
+      document.querySelector('.section-header'),
+      document.querySelector('.header-wrapper'),
+      document.querySelector('.header')
+    ].filter(Boolean);
+
+    let h = 0;
+    cands.forEach(el => { h = Math.max(h, el.offsetHeight || 0); });
+
+    const ab = document.querySelector('#shopify-section-announcement-bar, .announcement-bar');
+    if (ab) h += ab.offsetHeight || 0;
+
+    if (!h) h = 64;
+    document.documentElement.style.setProperty('--header-height', `${h}px`);
+  }
+  computeHeaderHeight();
+  window.addEventListener('resize', computeHeaderHeight);
+  document.addEventListener('shopify:section:load', computeHeaderHeight);
+  document.addEventListener('shopify:section:unload', computeHeaderHeight);
+
+  /* ---------- Sticky filter hide after section ---------- */
+  (function manageStickyFilters() {
+    if (!filterBar || !root) return;
+    let ticking = false;
+    function handleScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const rootRect = root.getBoundingClientRect();
+          if (rootRect.bottom < 50) filterBar.classList.add('past-section');
+          else filterBar.classList.remove('past-section');
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+  })();
+
+  /* ---------- Filtering ---------- */
+  function setActive(btn) {
+    filterNav.querySelectorAll('.broen-filter-btn-{{ ai_gen_id }}').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function getParam(name) {
+    const url = new URL(window.location.href);
+    return url.searchParams.get(name) || '';
+  }
+  function setParam(name, val) {
+    const url = new URL(window.location.href);
+    if (!val) url.searchParams.delete(name);
+    else url.searchParams.set(name, val);
+    history.replaceState({}, '', url);
+  }
+  function applyFilter(value) {
+    let shown = 0;
+    cards.forEach(card => {
+      const type = card.getAttribute('data-door-type');
+      const visible = !value || value === '' ? true : (type === value);
+      card.style.display = visible ? '' : 'none';
+      if (visible) shown++;
+    });
+    if (emptyEl) emptyEl.style.display = shown === 0 ? '' : 'none';
+  }
+
+  if (filterNav) {
+    filterNav.addEventListener('click', (e) => {
+      const a = e.target.closest('.broen-filter-btn-{{ ai_gen_id }}');
+      if (!a) return;
+      e.preventDefault();
+      const value = a.dataset.filter || '';
+      setActive(a);
+      applyFilter(value);
+      setParam('door_type', value);
+    });
+  }
+
+  const initial = getParam('door_type') || '';
+  const initialBtn = filterNav && filterNav.querySelector(`.broen-filter-btn-{{ ai_gen_id }}[data-filter="${initial}"]`);
+  if (initialBtn) setActive(initialBtn);
+  applyFilter(initial);
+
+  /* =====================================================
+     ADD TO CART FUNCTIONALITY (delegated, works for new cards)
+     ===================================================== */
+  function showCartDrawer() {
+    if (window.Drawer && window.Drawer.openDrawer) {
+      window.Drawer.openDrawer('cart');
+    } else if (window.theme && window.theme.openCartDrawer) {
+      window.theme.openCartDrawer();
+    } else if (document.querySelector('[data-cart-drawer]')) {
+      document.querySelector('[data-cart-drawer]').classList.add('is-open');
+    } else if (window.CartDrawer && window.CartDrawer.open) {
+      window.CartDrawer.open();
+    } else {
+      window.location.href = '/cart';
+    }
+  }
+  function addToCart(variantId, quantity = 1) {
+    return fetch('/cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ id: variantId, quantity })
+    }).then(response => response.ok ? response.json() : response.json().then(err => Promise.reject(err)));
+  }
+  function updateButtonState(btn, state, originalText) {
+    switch (state) {
+      case 'loading':
+        btn.disabled = true; btn.classList.add('loading'); btn.textContent = '{{ block.settings.adding_text }}'; break;
+      case 'success':
+        btn.disabled = false; btn.classList.remove('loading'); btn.textContent = '{{ block.settings.added_text }}';
+        setTimeout(() => { btn.textContent = originalText; }, 2000); break;
+      case 'error':
+        btn.disabled = false; btn.classList.remove('loading'); btn.textContent = '{{ block.settings.error_text }}';
+        setTimeout(() => { btn.textContent = originalText; }, 3000); break;
+      default:
+        btn.disabled = false; btn.classList.remove('loading'); btn.textContent = originalText;
+    }
+  }
+  root.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.broen-atc-btn');
+    if (!btn) return;
+    e.preventDefault();
+    const variantId = btn.dataset.variantId;
+    const available = btn.dataset.variantAvailable === 'true';
+    const originalText = btn.textContent.trim();
+    if (!available || !variantId) return;
+    try {
+      updateButtonState(btn, 'loading', originalText);
+      await addToCart(variantId, 1);
+      updateButtonState(btn, 'success', originalText);
+      const cartCount = document.querySelector('[data-cart-count], .cart-count, .header__cart-count');
+      if (cartCount) {
+        fetch('/cart.js').then(res => res.json()).then(cart => { cartCount.textContent = cart.item_count; }).catch(()=>{});
+      }
+      setTimeout(showCartDrawer, 500);
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      updateButtonState(btn, 'error', originalText);
+      if (error.message || error.description) alert(`Error: ${error.message || error.description}`);
+    }
+  });
+
+  /* =====================================================
+     Video: wire per-card (supports dynamically appended cards)
+     ===================================================== */
+  const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches
+               || 'ontouchstart' in window
+               || navigator.maxTouchPoints > 0;
+
+  let activeCard = null;
+  let activeVideo = null;
+
+  function choosePlayable(video){
+    let candidates = [];
+    try { if (video.dataset.sources) candidates = JSON.parse(video.dataset.sources || '[]'); } catch(e){}
+    if (!candidates.length){
+      video.querySelectorAll('source').forEach(s => candidates.push({ url: s.getAttribute('src'), type: s.getAttribute('type') }));
+    }
+    return candidates.find(s => s && s.url && video.canPlayType(s.type));
+  }
+  function stopVideo(v){ try { v.pause(); v.currentTime = 0; } catch(e){} }
+  function deactivateCard(card){
+    if (!card) return;
+    card.classList.remove('mobile-active');
+    const v = card.querySelector('video.broen-product-video-{{ ai_gen_id }}');
+    if (v){ stopVideo(v); if (activeVideo === v) activeVideo = null; }
+    if (activeCard === card) activeCard = null;
+  }
+  function activateCard(card, {addMobileClass = false} = {}){
+    if (activeCard && activeCard !== card) deactivateCard(activeCard);
+    if (addMobileClass) card.classList.add('mobile-active');
+
+    const v = card.querySelector('video.broen-product-video-{{ ai_gen_id }}');
+    if (v){
+      const playable = choosePlayable(v);
+      if (playable && !v.src) { v.src = playable.url; try { v.load(); } catch(e) {} }
+      const tryPlay = () => v.play().catch(()=>{});
+      if (v.readyState >= 2) tryPlay(); else v.addEventListener('canplay', tryPlay, { once: true });
+      activeVideo = v;
+      v.addEventListener('ended', () => deactivateCard(card));
+    }
+    activeCard = card;
+  }
+  function observeOutOfView(card){
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (!en.isIntersecting) deactivateCard(card); });
+    }, { threshold: 0.2 });
+    io.observe(card);
+  }
+  function wireCard(card){
+    observeOutOfView(card);
+    const imgZone = card.querySelector('.broen-card-image-{{ ai_gen_id }}');
+    if (!imgZone) return;
+
+    const v = card.querySelector('video.broen-product-video-{{ ai_gen_id }}');
+    if (v){
+      imgZone.classList.add('has-video');
+      if (!v.getAttribute('poster')) {
+        const img = imgZone.querySelector('img');
+        if (img && img.currentSrc) v.setAttribute('poster', img.currentSrc);
+      }
+      const markReady = () => { imgZone.classList.add('video-ready'); v.classList.add('is-ready'); };
+      if (v.readyState >= 2) markReady(); else {
+        v.addEventListener('canplay', markReady, { once: true });
+        v.addEventListener('loadeddata', markReady, { once: true });
+      }
+    }
+
+    if (isTouch){
+      let startX=0, startY=0, startT=0;
+      imgZone.addEventListener('touchstart', (e) => {
+        const t = e.touches[0]; startX = t.clientX; startY = t.clientY; startT = Date.now();
+      }, { passive: true });
+      imgZone.addEventListener('touchend', (e) => {
+        const t = e.changedTouches[0];
+        const dt = Date.now() - startT;
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        const travel = Math.hypot(dx, dy);
+        const isTap = dt < 300 && travel < 10;
+        if (!isTap) return;
+        e.preventDefault(); e.stopPropagation();
+        if (card.classList.contains('mobile-active')) deactivateCard(card);
+        else {
+          activateCard(card, { addMobileClass: true });
+          setTimeout(() => { if (card === activeCard) deactivateCard(card); }, 10000);
+        }
+      }, { passive: false });
+    } else {
+      imgZone.addEventListener('mouseenter', () => activateCard(card, { addMobileClass: false }));
+      imgZone.addEventListener('mouseleave', () => deactivateCard(card));
+      imgZone.addEventListener('focusin',   () => activateCard(card, { addMobileClass: false }));
+      imgZone.addEventListener('focusout',  () => deactivateCard(card));
+    }
+  }
+
+  // Wire existing cards
+  cards.forEach(wireCard);
+
+  // Stop playback when page/tab hidden
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' && activeCard){ deactivateCard(activeCard); }
+  });
+
+  /* =====================================================
+     UN-PAGINATE: fetch page=2,3,… & append until empty
+     ===================================================== */
+  async function fetchHTML(url){
+    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    return res.ok ? res.text() : '';
+  }
+  async function fetchSectionPage(page){
+    const cur = new URL(window.location.href);
+    const door = cur.searchParams.get('door_type') || '';
+    const qs = new URLSearchParams(cur.searchParams);
+    qs.set('page', page);
+    if (door) qs.set('door_type', door);
+
+    const tries = [
+      `${basePath}?section_id=${encodeURIComponent(sectionId)}&${qs.toString()}`,
+      `${basePath}?sections=${encodeURIComponent(sectionId)}&${qs.toString()}`,
+      `${basePath}?${qs.toString()}`
+    ];
+    for (const u of tries){
+      try {
+        const html = await fetchHTML(u);
+        if (html) return html;
+      } catch(e){}
+    }
+    return '';
+  }
+  function appendCardsFromHTML(html){
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+    const found = Array.from(tpl.content.querySelectorAll('.broen-card-{{ ai_gen_id }}'));
+    let appended = 0;
+    found.forEach(card => {
+      const pid = card.getAttribute('data-product-id') || '';
+      if (pid && seen.has(pid)) return;
+      if (pid) seen.add(pid);
+      grid.appendChild(card);
+      wireCard(card);
+      appended++;
+    });
+    return appended;
+  }
+
+  async function unpaginateAll(){
+    if (!sectionId) return;
+    const maxPages = 50; // safety cap
+    let any = false;
+    for (let p = 2; p <= maxPages; p++){
+      const html = await fetchSectionPage(p);
+      if (!html) break;
+      const added = appendCardsFromHTML(html);
+      if (!added) break;
+      any = true;
+    }
+    if (any){
+      cards = Array.from(grid.querySelectorAll('.broen-card-{{ ai_gen_id }}'));
+      applyFilter(getParam('door_type') || '');
+    }
+  }
+
+  // Kick it off
+  unpaginateAll();
+
+})();
+</script>
+
+
+
+{% schema %}
+{
+  "name": "Broen – Smart Locks",
+  "class": "section",
+  "tag": "section",
+  "settings": [
+    { "type": "header", "content": "Content Settings" },
+    { "type": "text", "id": "title", "label": "Collection Title", "default": "Different Smart Locks Built for Different Doors" },
+    { "type": "text", "id": "subtitle", "label": "Collection Subtitle", "default": "What kind of door do you have?" },
+    { "type": "text", "id": "filter_all_text", "label": "'All' Filter Text", "default": "All" },
+    {
+      "type": "textarea",
+      "id": "filter_buttons_custom",
+      "label": "Custom Filter Buttons (one per line: Label|slug)",
+      "info": "Example:\nMain Door|main-door\nOutdoor (Waterproof)|outdoor\nIndoor|indoor\nGlass Door|glass-door\nSliding Door|sliding-door\n\nIf slug is omitted, it will be auto-generated from the label.",
+      "default": "Main Door|main-door\nOutdoor (Waterproof)|outdoor\nIndoor|indoor\nGlass Door|glass-door\nSliding Door|sliding-door"
+    },
+    { "type": "text", "id": "atc_text", "label": "ATC Button Text", "default": "ATC" },
+    { "type": "text", "id": "buy_now_text", "label": "Buy Now Button Text", "default": "BUY NOW" },
+    { "type": "text", "id": "sold_out_text", "label": "Sold Out Text", "default": "Sold Out" },
+    { "type": "text", "id": "adding_text", "label": "Adding to Cart Text", "default": "Adding..." },
+    { "type": "text", "id": "added_text", "label": "Added to Cart Text", "default": "Added!" },
+    { "type": "text", "id": "error_text", "label": "Error Text", "default": "Error" },
+    { "type": "text", "id": "empty_title", "label": "Empty State Title", "default": "No products found" },
+    { "type": "text", "id": "empty_message", "label": "Empty State Message", "default": "Try selecting a different door type or browse all products." },
+
+    { "type": "header", "content": "Color Palette" },
+    { "type": "color", "id": "bg_gradient_start", "label": "Background Gradient Start", "default": "#0E1116" },
+    { "type": "color", "id": "bg_gradient_end", "label": "Background Gradient End", "default": "#1A1F27" },
+    { "type": "color", "id": "surface_card", "label": "Card Surface Color", "default": "#161B22" },
+    { "type": "color", "id": "border_muted", "label": "Border Color", "default": "#2A303B" },
+    { "type": "color", "id": "text_primary", "label": "Primary Text Color", "default": "#FFFFFF" },
+    { "type": "color", "id": "text_secondary", "label": "Secondary Text Color", "default": "#A8B0BB" },
+    { "type": "color", "id": "accent_primary", "label": "Primary Accent Color", "default": "#FFFFFF" },
+    { "type": "color", "id": "active_filter_text", "label": "Active Filter Text Color", "default": "#000000" },
+
+    { "type": "header", "content": "Typography" },
+    { "type": "range", "id": "title_size", "min": 24, "max": 60, "step": 2, "unit": "px", "label": "Title Font Size", "default": 36 },
+    { "type": "select", "id": "title_weight", "label": "Title Font Weight", "options": [{ "value": "400", "label": "Normal" }, { "value": "500", "label": "Medium" }, { "value": "600", "label": "Semibold" }, { "value": "700", "label": "Bold" }], "default": "600" },
+    { "type": "range", "id": "subtitle_size", "min": 14, "max": 28, "step": 1, "unit": "px", "label": "Subtitle Font Size", "default": 18 },
+    { "type": "select", "id": "subtitle_weight", "label": "Subtitle Font Weight", "options": [{ "value": "400", "label": "Normal" }, { "value": "500", "label": "Medium" }, { "value": "600", "label": "Semibold" }], "default": "400" },
+    { "type": "range", "id": "card_title_size", "min": 14, "max": 20, "step": 1, "unit": "px", "label": "Card Title Font Size", "default": 16 },
+    { "type": "select", "id": "card_title_weight", "label": "Card Title Font Weight", "options": [{ "value": "500", "label": "Medium" }, { "value": "600", "label": "Semibold" }, { "value": "700", "label": "Bold" }], "default": "600" },
+    { "type": "range", "id": "title_truncate", "min": 20, "max": 80, "step": 5, "label": "Card Title Character Limit", "default": 50 },
+    { "type": "range", "id": "price_size", "min": 14, "max": 20, "step": 1, "unit": "px", "label": "Price Font Size", "default": 16 },
+    { "type": "select", "id": "price_weight", "label": "Price Font Weight", "options": [{ "value": "500", "label": "Medium" }, { "value": "600", "label": "Semibold" }, { "value": "700", "label": "Bold" }], "default": "600" },
+    { "type": "range", "id": "compare_price_size", "min": 12, "max": 18, "step": 1, "unit": "px", "label": "Compare Price Font Size", "default": 14 },
+
+    { "type": "header", "content": "Filter Styling" },
+    { "type": "range", "id": "filter_font_size", "min": 12, "max": 16, "step": 1, "unit": "px", "label": "Filter Font Size", "default": 14 },
+    { "type": "select", "id": "filter_font_weight", "label": "Filter Font Weight", "options": [{ "value": "400", "label": "Normal" }, { "value": "500", "label": "Medium" }, { "value": "600", "label": "Semibold" }], "default": "500" },
+    { "type": "range", "id": "filter_padding_y", "min": 8, "max": 16, "step": 2, "unit": "px", "label": "Filter Vertical Padding", "default": 12 },
+    { "type": "range", "id": "filter_padding_x", "min": 16, "max": 32, "step": 2, "unit": "px", "label": "Filter Horizontal Padding", "default": 24 },
+    { "type": "range", "id": "filter_border_radius", "min": 16, "max": 30, "step": 2, "unit": "px", "label": "Filter Border Radius", "default": 24 },
+    { "type": "range", "id": "filter_gap", "min": 8, "max": 24, "step": 4, "unit": "px", "label": "Legacy Gap (Fallback)", "default": 12 },
+    { "type": "range", "id": "filter_row_gap", "min": 0, "max": 36, "step": 2, "unit": "px", "label": "Filter Vertical Gap", "default": 8 },
+    { "type": "range", "id": "filter_col_gap", "min": 0, "max": 36, "step": 2, "unit": "px", "label": "Filter Horizontal Gap", "default": 12 },
+    { "type": "select", "id": "filter_align", "label": "Filter Alignment", "options": [
+      { "value": "center", "label": "Center" },
+      { "value": "start",  "label": "Left" }
+    ], "default": "center" },
+    { "type": "checkbox", "id": "filter_mobile_wrap", "label": "Wrap filters on mobile (no scroll)", "default": true },
+
+    { "type": "header", "content": "Button Styling" },
+    { "type": "range", "id": "btn_font_size", "min": 12, "max": 16, "step": 1, "unit": "px", "label": "Button Font Size", "default": 14 },
+    { "type": "select", "id": "btn_font_weight", "label": "Button Font Weight", "options": [{ "value": "400", "label": "Normal" }, { "value": "500", "label": "Medium" }, { "value": "600", "label": "Semibold" }], "default": "500" },
+    { "type": "range", "id": "btn_padding_y", "min": 8, "max": 16, "step": 2, "unit": "px", "label": "Button Vertical Padding", "default": 12 },
+    { "type": "range", "id": "btn_padding_x", "min": 12, "max": 24, "step": 2, "unit": "px", "label": "Button Horizontal Padding", "default": 16 },
+    { "type": "range", "id": "btn_border_radius", "min": 16, "max": 30, "step": 2, "unit": "px", "label": "Button Border Radius", "default": 24 },
+
+    { "type": "header", "content": "Layout & Spacing" },
+    { "type": "range", "id": "container_max_width", "min": 1000, "max": 1400, "step": 50, "unit": "px", "label": "Container Max Width", "default": 1200 },
+    { "type": "range", "id": "container_padding", "min": 16, "max": 40, "step": 4, "unit": "px", "label": "Container Side Padding", "default": 20 },
+    { "type": "range", "id": "header_padding_y", "min": 16, "max": 40, "step": 4, "unit": "px", "label": "Filter-Bar Inner Padding Y", "default": 24 },
+    { "type": "range", "id": "title_margin", "min": 8, "max": 32, "step": 4, "unit": "px", "label": "Title Bottom Margin", "default": 16 },
+    { "type": "range", "id": "subtitle_margin", "min": 16, "max": 48, "step": 4, "unit": "px", "label": "Subtitle Bottom Margin", "default": 32 },
+    { "type": "range", "id": "grid_padding_top", "min": 24, "max": 80, "step": 8, "unit": "px", "label": "Grid Top Padding", "default": 48 },
+    { "type": "range", "id": "grid_padding_bottom", "min": 24, "max": 80, "step": 8, "unit": "px", "label": "Grid Bottom Padding", "default": 48 },
+    { "type": "range", "id": "card_min_width", "min": 280, "max": 360, "step": 20, "unit": "px", "label": "Card Minimum Width (Desktop)", "default": 320 },
+    { "type": "range", "id": "grid_gap_desktop", "min": 16, "max": 40, "step": 4, "unit": "px", "label": "Grid Gap (Desktop)", "default": 24 },
+    { "type": "range", "id": "grid_gap_mobile", "min": 8, "max": 24, "step": 4, "unit": "px", "label": "Grid Gap (Mobile)", "default": 12 },
+    { "type": "range", "id": "mobile_breakpoint", "min": 640, "max": 768, "step": 16, "unit": "px", "label": "Mobile Breakpoint", "default": 768 },
+
+    { "type": "header", "content": "Header Spacing" },
+    { "type": "range", "id": "header_padding_top", "min": 0, "max": 120, "step": 4, "unit": "px", "label": "Header Top Padding", "default": 32 },
+    { "type": "range", "id": "header_padding_bottom", "min": 0, "max": 80, "step": 4, "unit": "px", "label": "Header Bottom Padding", "default": 8 },
+
+    { "type": "header", "content": "Card Design" },
+    { "type": "range", "id": "card_radius", "min": 8, "max": 24, "step": 2, "unit": "px", "label": "Card Border Radius", "default": 12 },
+    { "type": "range", "id": "card_padding", "min": 16, "max": 32, "step": 4, "unit": "px", "label": "Card Content Padding", "default": 20 },
+    { "type": "range", "id": "card_title_margin", "min": 4, "max": 16, "step": 2, "unit": "px", "label": "Card Title Bottom Margin", "default": 8 },
+    { "type": "range", "id": "card_hover_lift", "min": 2, "max": 8, "step": 1, "unit": "px", "label": "Card Hover Lift", "default": 4 },
+    { "type": "range", "id": "card_shadow_y", "min": 10, "max": 30, "step": 5, "unit": "px", "label": "Card Shadow Y Offset", "default": 20 },
+    { "type": "range", "id": "card_shadow_blur", "min": 20, "max": 60, "step": 10, "unit": "px", "label": "Card Shadow Blur", "default": 40 },
+    { "type": "range", "id": "image_hover_scale", "min": 100, "max": 110, "step": 1, "unit": "%", "label": "Image Hover Scale", "default": 105 },
+    { "type": "range", "id": "action_gap", "min": 6, "max": 16, "step": 2, "unit": "px", "label": "Action Button Gap", "default": 8 },
+    { "type": "range", "id": "action_margin_top", "min": 12, "max": 24, "step": 4, "unit": "px", "label": "Action Section Top Margin", "default": 16 },
+    { "type": "range", "id": "price_margin", "min": 8, "max": 20, "step": 2, "unit": "px", "label": "Price Section Margin", "default": 12 },
+
+    { "type": "header", "content": "Door Classification Styling" },
+    { "type": "color", "id": "classification_text_color", "label": "Classification Text Color", "default": "#000000" },
+    { "type": "range", "id": "classification_padding_y", "min": 4, "max": 12, "step": 2, "unit": "px", "label": "Classification Vertical Padding", "default": 6 },
+    { "type": "range", "id": "classification_padding_x", "min": 8, "max": 20, "step": 2, "unit": "px", "label": "Classification Horizontal Padding", "default": 12 },
+    { "type": "range", "id": "classification_border_radius", "min": 4, "max": 20, "step": 2, "unit": "px", "label": "Classification Border Radius", "default": 8 },
+    { "type": "range", "id": "classification_font_size", "min": 10, "max": 16, "step": 1, "unit": "px", "label": "Classification Font Size", "default": 12 },
+    { "type": "select", "id": "classification_font_weight", "label": "Classification Font Weight", "options": [{ "value": "400", "label": "Normal" }, { "value": "500", "label": "Medium" }, { "value": "600", "label": "Semibold" }, { "value": "700", "label": "Bold" }], "default": "600" },
+    { "type": "range", "id": "classification_margin", "min": 4, "max": 16, "step": 2, "unit": "px", "label": "Classification Margin", "default": 8 },
+    { "type": "text", "id": "classification_placeholder_text", "label": "Door Classification Placeholder", "default": "Premium Lock", "info": "Text shown when product doesn't have door_type metafield" }
+  ],
+  "presets": [{ "name": "Broen – Smart Locks" }]
+}
+{% endschema %}

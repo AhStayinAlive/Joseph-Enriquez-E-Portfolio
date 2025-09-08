@@ -1,0 +1,829 @@
+{% comment %}
+  OUR CLIENTS CAROUSEL — Door type pill now comes from the PRODUCT METAFIELD (custom.door_type).
+  - Smooth mobile scroll-sync (same engine as Product Carousel)
+  - Equal edge padding set via --mobile-edge (computed from scrollport)
+  - Dots on mobile = 1 per card; desktop = per page
+{% endcomment %}
+
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  clients-carousel-{{ ai_gen_id }} { display:block; isolation:isolate; }
+
+  .ai-clients-carousel-{{ ai_gen_id }}{
+    --bg: {{ block.settings.background_color | default: '#000000' }};
+    --text: {{ block.settings.card_text_color | default: '#ffffff' }};
+    --surface: {{ block.settings.card_background | default: '#1a1a1a' }};
+    --hairline: {{ block.settings.card_background | default: '#1a1a1a' | color_lighten: 35 | color_modify: 'alpha', 0.12 }};
+    --hairline-strong: {{ block.settings.card_background | default: '#1a1a1a' | color_lighten: 45 | color_modify: 'alpha', 0.22 }};
+    --elev-shadow: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+    --elev-shadow-lg: 0 28px 80px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.06) inset;
+    --radius: {{ block.settings.card_border_radius | default: 24 }}px;
+    --gap: 24px;
+    --gap-mobile: 16px; /* used by JS if gap reads as 'normal' */
+    --heading: {{ block.settings.heading_color | default: '#ffffff' }};
+    --overlay: var(--testimonial-overlay-bg, {{ block.settings.testimonial_overlay_color | default: '#000000' }});
+    --lg-btn-color: {{ block.settings.button_text_color | default: '#ffffff' }};
+    padding-top: var(--pt);
+    padding-bottom: var(--pb);
+    background: var(--bg) !important;
+    overflow: visible; width: 100%; position: relative;
+  }
+
+  .ai-clients-carousel-{{ ai_gen_id }}::before{ background:none!important; content:none!important; z-index:1; pointer-events:none; }
+
+  .ai-clients-carousel__container-{{ ai_gen_id }}{ width:100%; margin:0 auto; padding:0 20px; position:relative; z-index:2; }
+
+  .ai-clients-carousel__heading-{{ ai_gen_id }}{
+    color:var(--heading);
+    font-size:clamp({{ block.settings.heading_size | default: 48 | minus: 8 }}px, 5vw, {{ block.settings.heading_size | default: 48 }}px);
+    font-weight:700; text-align:center; margin:0 0 {{ block.settings.heading_spacing | default: 80 }}px;
+    letter-spacing:-0.02em; line-height:1.04; position:relative;
+  }
+  .ai-clients-carousel__heading-{{ ai_gen_id }}::after{
+    content:''; position:absolute; left:50%; bottom:-20px; transform:translateX(-50%);
+    width:72px; height:1px; border-radius:9999px;
+    background:linear-gradient(90deg,transparent, color-mix(in srgb, var(--heading) 70%, transparent), transparent);
+  }
+
+  .ai-clients-carousel__wrapper-{{ ai_gen_id }}{ position:relative; overflow:hidden; margin:0; padding:28px 0 72px; z-index:2; }
+  .ai-clients-carousel__track-container-{{ ai_gen_id }}{ position:relative; overflow:visible; margin:0 72px; border-radius:calc(var(--radius) + 4px); z-index:2; }
+  .ai-clients-carousel__track-{{ ai_gen_id }}{
+    display:flex; gap:var(--gap);
+    transition:transform .6s cubic-bezier(.16,1,.3,1); will-change:transform;
+    padding:0 16px; width:100%;
+  }
+
+  .ai-clients-carousel__card-{{ ai_gen_id }}{
+    flex:0 0 auto;
+    width: calc(
+      (100% - ({{ block.settings.cards_per_view_desktop | default: 3 | minus: 1 }} * var(--gap)))
+      / {{ block.settings.cards_per_view_desktop | default: 3 }}
+    );
+    min-width:0; max-width:none; height:460px;
+    color:var(--text); text-decoration:none; cursor:pointer;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, #fff 8%) 0%, var(--surface) 100%);
+    border:1px solid var(--hairline); border-radius:var(--radius);
+    box-shadow:var(--elev-shadow); overflow:hidden;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    transition:transform .5s cubic-bezier(.2,.7,.2,1), box-shadow .35s, border-color .35s, background .35s;
+    will-change:transform; position:relative; z-index:1;
+  }
+  .ai-clients-carousel__card-{{ ai_gen_id }}:hover{
+    transform:translateY(-14px) scale(1.015);
+    border-color:var(--hairline-strong);
+    box-shadow:var(--elev-shadow-lg);
+    background:linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, #fff 4%) 0%, var(--surface) 100%);
+    z-index:3;
+  }
+
+  .ai-clients-carousel__card-media-{{ ai_gen_id }}{
+    position:relative; width:100%; height:260px; padding:24px;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--surface) 88%, #fff 12%) 0%, color-mix(in srgb, var(--surface) 100%, #000 0%) 100%);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    border-radius:calc(var(--radius) - 6px);
+  }
+  .ai-clients-carousel__card-media-{{ ai_gen_id }} img,
+  .ai-clients-carousel__card-media-{{ ai_gen_id }} video{
+    width:100%; height:100%; object-fit:cover; border-radius:16px; transition:transform .6s cubic-bezier(.16,1,.3,1);
+  }
+  .ai-clients-carousel__card-{{ ai_gen_id }}:hover .ai-clients-carousel__card-media-{{ ai_gen_id }} img,
+  .ai-clients-carousel__card-{{ ai_gen_id }}:hover .ai-clients-carousel__card-media-{{ ai_gen_id }} video{ transform:scale(1.035); }
+
+  .ai-clients-carousel__card-placeholder-{{ ai_gen_id }}{
+    width:100%; height:100%;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--surface) 86%, #fff 14%) 0%, color-mix(in srgb, var(--surface) 96%, #000 4%) 100%);
+    border-radius:16px; display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:500; color:color-mix(in srgb, var(--text) 60%, transparent);
+    border:1px solid var(--hairline);
+  }
+  .ai-clients-carousel__card-placeholder-{{ ai_gen_id }} svg{ width:44px; height:44px; opacity:.4; fill:color-mix(in srgb, var(--text) 50%, transparent); }
+
+  .ai-clients-carousel__client-info-{{ ai_gen_id }}{
+    position:absolute; left:0; right:0; bottom:0;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--overlay) 0%, transparent) 0%, color-mix(in srgb, var(--overlay) 78%, transparent) 36%, color-mix(in srgb, var(--overlay) 92%, transparent) 100%);
+    padding:22px 22px 20px; color:var(--text); backdrop-filter:blur(14px);
+    display:flex; flex-direction:column; gap:12px; min-height:120px; justify-content:flex-end; z-index:2;
+    transition:opacity .35s ease, transform .35s ease;
+  }
+
+  /* Location pill */
+  .ai-clients-carousel__location-{{ ai_gen_id }}{
+    font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.12em;
+    color: {{ block.settings.location_badge_color | default: '#deb887' }};
+    padding:6px 10px;
+    background: color-mix(in srgb, {{ block.settings.location_badge_bg | default: '#614524' }} 22%, transparent);
+    border:1px solid color-mix(in srgb, {{ block.settings.location_badge_bg | default: '#614524' }} 36%, transparent);
+    border-radius:9999px; width:fit-content;
+  }
+
+  /* Door-type pill — same shape as location, matte (no blur) */
+  .ai-clients-carousel__door-type-{{ ai_gen_id }}{
+    font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.12em;
+    color: {{ block.settings.location_badge_color | default: '#deb887' }};
+    padding:6px 10px;
+    background: color-mix(in srgb, {{ block.settings.location_badge_bg | default: '#614524' }} 22%, transparent);
+    border:1px solid color-mix(in srgb, {{ block.settings.location_badge_bg | default: '#614524' }} 36%, transparent);
+    border-radius:9999px; width:fit-content;
+  }
+
+  .ai-clients-carousel__product-name-{{ ai_gen_id }}{
+    font-size:24px; font-weight:650; letter-spacing:-0.015em; margin:0; line-height:1.12; color:var(--text);
+  }
+
+  .ai-clients-carousel__testimonial-overlay-{{ ai_gen_id }}{
+    position:absolute; left:12px; right:12px; bottom:12px; top:auto;
+    background: color-mix(in srgb, var(--overlay) 68%, transparent);
+    border:1px solid color-mix(in srgb, var(--overlay) 28%, #fff 8%);
+    border-radius: calc(var(--radius) - 10px);
+    padding:20px 18px 18px; opacity:0; transform:translateY(8px);
+    transition:opacity .35s cubic-bezier(.22,.61,.36,1), transform .35s cubic-bezier(.22,.61,.36,1);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:3;
+    box-shadow: 0 12px 38px rgba(0,0,0,.45);
+  }
+  .ai-clients-carousel__card-{{ ai_gen_id }}:hover .ai-clients-carousel__client-info-{{ ai_gen_id }}{ opacity:0; transform:translateY(6px); }
+  .ai-clients-carousel__card-{{ ai_gen_id }}:hover .ai-clients-carousel__testimonial-overlay-{{ ai_gen_id }}{ opacity:1; transform:translateY(0); }
+
+  .ai-clients-carousel__testimonial-quote-{{ ai_gen_id }}{
+    font-size:15px; line-height:1.5; font-style:italic; text-align:center; margin:0 0 16px; color:var(--text);
+    letter-spacing:-.005em; padding:0 6px; max-height:110px; overflow:hidden; position:relative;
+  }
+  .ai-clients-carousel__testimonial-quote-{{ ai_gen_id }}::before,
+  .ai-clients-carousel__testimonial-quote-{{ ai_gen_id }}::after{
+    content:'"'; position:absolute; font-size:28px; opacity:.35; font-family:Georgia, serif;
+  }
+  .ai-clients-carousel__testimonial-quote-{{ ai_gen_id }}::before{ left:-2px; top:-8px; }
+  .ai-clients-carousel__testimonial-quote-{{ ai_gen_id }}::after{ content:'"'; right:-2px; bottom:-10px; }
+
+  .ai-clients-carousel__testimonial-button-{{ ai_gen_id }}{ }
+
+  .ai-clients-carousel__navigation-{{ ai_gen_id }}{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:52px; height:52px; border-radius:50%;
+    background: color-mix(in srgb, var(--heading) 92%, transparent);
+    border:1px solid color-mix(in srgb, var(--heading) 25%, transparent);
+    color: var(--bg); cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:transform .25s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    z-index:200; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow:0 6px 24px rgba(0,0,0,.35);
+  }
+  .ai-clients-carousel__navigation-{{ ai_gen_id }}:hover{ transform:translateY(-50%) scale(1.06); background: var(--heading); border-color: var(--heading); }
+  .ai-clients-carousel__navigation-{{ ai_gen_id }}:active{ transform:translateY(-50%) scale(.96); }
+  .ai-clients-carousel__navigation-{{ ai_gen_id }}:disabled{ opacity:.4; cursor:not-allowed; transform:translateY(-50%) scale(.92); }
+  .ai-clients-carousel__navigation--prev-{{ ai_gen_id }}{ left:18px; }
+  .ai-clients-carousel__navigation--next-{{ ai_gen_id }}{ right:18px; }
+  .ai-clients-carousel__navigation-{{ ai_gen_id }} svg{ width:20px; height:20px; stroke-width:2.25; }
+
+  .ai-clients-carousel__pagination-{{ ai_gen_id }}{ display:flex; justify-content:center; gap:8px; margin-top:32px; }
+  .ai-clients-carousel__dot-{{ ai_gen_id }}{
+    width:18px; height:6px; border-radius:9999px; border:none; cursor:pointer; padding:0; outline:none;
+    background: color-mix(in srgb, var(--heading) 22%, transparent);
+    transition: width .25s ease, transform .25s ease, background .2s ease;
+  }
+  .ai-clients-carousel__dot-{{ ai_gen_id }}:hover{ background: color-mix(in srgb, var(--heading) 45%, transparent); }
+  .ai-clients-carousel__dot-{{ ai_gen_id }}.active{ width:28px; background: var(--heading); }
+
+  .ai-clients-carousel__empty-state-{{ ai_gen_id }}{ text-align:center; padding:80px 20px; color:color-mix(in srgb, var(--text) 60%, transparent); }
+  .ai-clients-carousel__empty-title-{{ ai_gen_id }}{ font-size:20px; font-weight:600; margin:0 0 10px; }
+  .ai-clients-carousel__empty-text-{{ ai_gen_id }}{ font-size:15px; opacity:.75; }
+
+  clients-carousel-{{ ai_gen_id }}{ overflow:visible; }
+  .shopify-section:has(.ai-clients-carousel-{{ ai_gen_id }}){ overflow:visible; }
+
+  @media screen and (max-width:1200px){
+    .ai-clients-carousel__container-{{ ai_gen_id }}{ padding:0 16px; }
+    .ai-clients-carousel__track-container-{{ ai_gen_id }}{ margin:0 56px; }
+    .ai-clients-carousel__track-{{ ai_gen_id }}{ padding:0 14px; }
+    .ai-clients-carousel__navigation--prev-{{ ai_gen_id }}{ left:8px; }
+    .ai-clients-carousel__navigation--next-{{ ai_gen_id }}{ right:8px; }
+  }
+
+  @media screen and (max-width:768px){
+    .ai-clients-carousel-{{ ai_gen_id }}{ padding-top:calc(var(--pt)*.6); padding-bottom:calc(var(--pb)*.6); }
+    .ai-clients-carousel__container-{{ ai_gen_id }}{ padding:0 12px; }
+    .ai-clients-carousel__heading-{{ ai_gen_id }}{ margin-bottom: {{ block.settings.heading_spacing | default: 80 | times: 0.67 | round }}px; }
+    .ai-clients-carousel__wrapper-{{ ai_gen_id }}{ padding:20px 0 64px; overflow:visible; }
+
+    /* KEY: equal edges set via --mobile-edge for center snapping */
+    .ai-clients-carousel__track-container-{{ ai_gen_id }}{
+      margin:0; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory;
+      scrollbar-width:none; -ms-overflow-style:none; border-radius:0;
+      padding:56px var(--mobile-edge, calc((100% - var(--mobile-card-w)) / 2)); 
+      overscroll-behavior-x:contain; scroll-behavior:smooth;
+    }
+    .ai-clients-carousel__track-container-{{ ai_gen_id }}::-webkit-scrollbar{ display:none; }
+
+    .ai-clients-carousel__track-{{ ai_gen_id }}{ gap:var(--gap-mobile); padding:0; display:flex; }
+
+    /* Mobile card sizing + snap */
+    .ai-clients-carousel-{{ ai_gen_id }}{ --mobile-card-w: 300px; }
+    .ai-clients-carousel__card-{{ ai_gen_id }}{ width:var(--mobile-card-w); min-width:var(--mobile-card-w); height:440px; scroll-snap-align:center; transform-origin:center bottom; will-change:transform; position:relative; z-index:1; }
+    .ai-clients-carousel__card-media-{{ ai_gen_id }}{ height:236px; padding:18px; }
+    .ai-clients-carousel__client-info-{{ ai_gen_id }}{ padding:22px 18px 18px; min-height:108px; }
+    .ai-clients-carousel__product-name-{{ ai_gen_id }}{ font-size:21px; }
+    .ai-clients-carousel__location-{{ ai_gen_id }}{ font-size:9px; padding:5px 9px; }
+    .ai-clients-carousel__door-type-{{ ai_gen_id }}{ font-size:9px; padding:5px 9px; }
+    .ai-clients-carousel__testimonial-overlay-{{ ai_gen_id }}{ left:10px; right:10px; bottom:10px; padding:18px 16px 16px; }
+    .ai-clients-carousel__navigation-{{ ai_gen_id }}{ display:none; }
+    .ai-clients-carousel__pagination-{{ ai_gen_id }}{ gap:6px; margin-top:26px; }
+  }
+
+  @supports (-webkit-touch-callout:none){
+    @media screen and (max-width:768px){
+      .ai-clients-carousel__card-{{ ai_gen_id }}{ isolation:isolate; }
+    }
+  }
+
+  @media screen and (max-width:768px) and (hover:none){
+    .ai-clients-carousel__card-{{ ai_gen_id }}:active,
+    .ai-clients-carousel__card-{{ ai_gen_id }}:focus-within{
+      transform:translateY(-12px) scale(1.02); z-index:6;
+    }
+  }
+
+  @media screen and (max-width:480px){
+    .ai-clients-carousel-{{ ai_gen_id }}{ --mobile-card-w: 280px; }  /* narrower phones */
+    .ai-clients-carousel__card-{{ ai_gen_id }}{ height:420px; }
+    .ai-clients-carousel__card-media-{{ ai_gen_id }}{ height:212px; padding:16px; }
+    .ai-clients-carousel__client-info-{{ ai_gen_id }}{ padding:18px 16px 16px; min-height:100px; }
+    .ai-clients-carousel__product-name-{{ ai_gen_id }}{ font-size:19px; }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .ai-clients-carousel__card-{{ ai_gen_id }},
+    .ai-clients-carousel__card-media-{{ ai_gen_id }} img,
+    .ai-clients-carousel__card-media-{{ ai_gen_id }} video,
+    .ai-clients-carousel__navigation-{{ ai_gen_id }},
+    .ai-clients-carousel__track-{{ ai_gen_id }},
+    .ai-clients-carousel__dot-{{ ai_gen_id }},
+    .ai-clients-carousel__testimonial-overlay-{{ ai_gen_id }}{ transition:none; }
+    .ai-clients-carousel__card-{{ ai_gen_id }}:hover,
+    .ai-clients-carousel__card-{{ ai_gen_id }}:hover .ai-clients-carousel__card-media-{{ ai_gen_id }} img,
+    .ai-clients-carousel__card-{{ ai_gen_id }}:hover .ai-clients-carousel__card-media-{{ ai_gen_id }} video{ transform:none; }
+  }
+{% endstyle %}
+
+<clients-carousel-{{ ai_gen_id }}
+  class="ai-clients-carousel-{{ ai_gen_id }}"
+  {{ block.shopify_attributes }}
+  data-cards-per-view="{{ block.settings.cards_per_view_desktop | default: 3 }}"
+  data-auto-play="{{ block.settings.enable_autoplay }}"
+  data-auto-play-speed="{{ block.settings.autoplay_speed | default: 5000 }}"
+  style="--pt: {{ block.settings.section_padding_top | default: 100 }}px; --pb: {{ block.settings.section_padding | default: 80 }}px; --testimonial-overlay-bg: {{ block.settings.testimonial_overlay_color | default: '#000000' }}; --location-badge-color: {{ block.settings.location_badge_color | default: '#deb887' }}; --location-badge-bg: {{ block.settings.location_badge_bg | default: '#614524' }}; --client-info-bg: {{ block.settings.client_info_overlay_bg | default: '#000000' }};"
+>
+  <div class="ai-clients-carousel__container-{{ ai_gen_id }}">
+    {% if block.settings.heading != blank %}
+      <h2 class="ai-clients-carousel__heading-{{ ai_gen_id }}">{{ block.settings.heading }}</h2>
+    {% endif %}
+
+    {% assign has_clients = false %}
+    {% for i in (1..8) %}
+      {% assign client_enabled_key = 'client_' | append: i | append: '_enabled' %}
+      {% if block.settings[client_enabled_key] %}
+        {% assign has_clients = true %}{% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if has_clients %}
+      <div class="ai-clients-carousel__wrapper-{{ ai_gen_id }} section--with-shine">
+        <div class="ai-clients-carousel__track-container-{{ ai_gen_id }}">
+          <div class="ai-clients-carousel__track-{{ ai_gen_id }}" role="region" aria-label="Client testimonials">
+            {% for i in (1..8) %}
+              {% liquid
+                assign client_enabled_key = 'client_' | append: i | append: '_enabled'
+                assign client_media_key = 'client_' | append: i | append: '_media'
+                assign client_location_key = 'client_' | append: i | append: '_location'
+                assign client_product_name_key = 'client_' | append: i | append: '_product_name'
+                assign client_name_key = 'client_' | append: i | append: '_name'
+                assign client_testimonial_key = 'client_' | append: i | append: '_testimonial'
+                assign client_button_label_key = 'client_' | append: i | append: '_button_label'
+                assign client_link_key = 'client_' | append: i | append: '_link'
+                assign client_product_ref_key = 'client_' | append: i | append: '_product_ref'
+                assign client_product_meta_key = 'client_' | append: i | append: '_product_meta'
+                assign client_product_name_override_key = 'client_' | append: i | append: '_product_name_override'
+                assign client_link_fallback_key = 'client_' | append: i | append: '_link_fallback'
+
+                assign client_enabled = block.settings[client_enabled_key]
+                assign client_media = block.settings[client_media_key]
+                assign client_location = block.settings[client_location_key]
+                assign client_product_name = block.settings[client_product_name_key]
+                assign client_name = block.settings[client_name_key]
+                assign client_testimonial = block.settings[client_testimonial_key]
+                assign client_button_label = block.settings[client_button_label_key]
+                assign client_link = block.settings[client_link_key]
+                assign client_product_ref = block.settings[client_product_ref_key]
+                assign client_product_meta = block.settings[client_product_meta_key]
+                assign client_product_name_override = block.settings[client_product_name_override_key]
+                assign client_link_fallback = block.settings[client_link_fallback_key]
+
+                assign product_obj = blank
+                if client_product_ref != blank
+                  assign product_obj = client_product_ref
+                elsif client_product_meta != blank
+                  assign product_obj = all_products[client_product_meta]
+                endif
+
+                assign resolved_link = '#'
+                assign resolved_product_name = client_product_name
+                if product_obj != blank
+                  assign resolved_link = product_obj.url
+                  assign resolved_product_name = product_obj.title
+                elsif client_link_fallback != blank
+                  assign resolved_link = client_link_fallback
+                elsif client_link != blank
+                  assign resolved_link = client_link
+                endif
+                if client_product_name_override != blank
+                  assign resolved_product_name = client_product_name_override
+                endif
+
+                assign door_type = blank
+                if product_obj != blank
+                  if product_obj.metafields.custom.door_type != blank
+                    assign door_type = product_obj.metafields.custom.door_type.value | default: product_obj.metafields.custom.door_type
+                  endif
+                endif
+              %}
+
+              {% if client_enabled %}
+                <a href="{{ resolved_link | default: '#' }}"
+                   class="ai-clients-carousel__card-{{ ai_gen_id }}"
+                   aria-label="{% if resolved_product_name != blank %}{{ resolved_product_name | escape }}{% else %}Client {{ i }}{% endif %}">
+                  <div class="ai-clients-carousel__card-media-{{ ai_gen_id }}">
+                    {% if client_media %}
+                      {% if client_media.media_type == 'video' %}
+                        <video src="{{ client_media.sources[1].url }}"
+                               poster="{{ client_media.preview_image | image_url: width: 600 }}"
+                               muted loop playsinline loading="lazy" width="600" height="400"></video>
+                      {% else %}
+                        <img src="{{ client_media | image_url: width: 600 }}"
+                             alt="{{ client_media.alt | escape }}"
+                             loading="lazy" width="600" height="400">
+                      {% endif %}
+                    {% else %}
+                      <div class="ai-clients-carousel__card-placeholder-{{ ai_gen_id }}">
+                        {{ 'image' | placeholder_svg_tag }}
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <div class="ai-clients-carousel__client-info-{{ ai_gen_id }}">
+                    {% if client_location != blank %}
+                      <div class="ai-clients-carousel__location-{{ ai_gen_id }}">{{ client_location }}</div>
+                    {% endif %}
+
+                    {% if resolved_product_name != blank %}
+                      <h3 class="ai-clients-carousel__product-name-{{ ai_gen_id }}">{{ resolved_product_name }}</h3>
+                    {% endif %}
+
+                    {% if door_type != blank %}
+                      <div class="ai-clients-carousel__door-type-{{ ai_gen_id }}">{{ door_type }}</div>
+                    {% endif %}
+
+                    {% if client_name != blank %}
+                      <div class="ai-clients-carousel__client-name-{{ ai_gen_id }}">{{ client_name }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="ai-clients-carousel__testimonial-overlay-{{ ai_gen_id }}">
+                    {% if client_testimonial != blank %}
+                      <blockquote class="ai-clients-carousel__testimonial-quote-{{ ai_gen_id }}">{{ client_testimonial }}</blockquote>
+                    {% endif %}
+                    {% if client_button_label != blank %}
+                      <span class="ai-clients-carousel__testimonial-button-{{ ai_gen_id }} lg-btn lg-btn--dark">{{ client_button_label }}</span>
+                    {% endif %}
+                  </div>
+                </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <button class="ai-clients-carousel__navigation-{{ ai_gen_id }} ai-clients-carousel__navigation--prev-{{ ai_gen_id }}" aria-label="Previous client" type="button">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18L9 12L15 6"/></svg>
+        </button>
+        <button class="ai-clients-carousel__navigation-{{ ai_gen_id }} ai-clients-carousel__navigation--next-{{ ai_gen_id }}" aria-label="Next client" type="button">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18L15 12L9 6"/></svg>
+        </button>
+
+        <div class="ai-clients-carousel__pagination-{{ ai_gen_id }}" role="tablist" aria-label="Client pagination"></div>
+      </div>
+    {% else %}
+      <div class="ai-clients-carousel__empty-state-{{ ai_gen_id }}">
+        <h3 class="ai-clients-carousel__empty-title-{{ ai_gen_id }}">Ready to showcase your clients</h3>
+        <p class="ai-clients-carousel__empty-text-{{ ai_gen_id }}">Enable client testimonials in the theme editor to get started</p>
+      </div>
+    {% endif %}
+  </div>
+</clients-carousel-{{ ai_gen_id }}>
+
+<script>
+(function() {
+  class ClientsCarousel{{ ai_gen_id }} extends HTMLElement {
+    constructor() {
+      super();
+      this.currentSlide = 0;
+      this.isDesktop = window.innerWidth >= 768;
+      this.cardsPerView = this.isDesktop ? (parseInt(this.dataset.cardsPerView) || 3) : 1;
+      this.isTransitioning = false;
+      this.totalCards = 0;
+      this.autoPlayEnabled = this.dataset.autoPlay === 'true' || this.dataset.autoPlay === '1';
+      this.autoPlaySpeed = parseInt(this.dataset.autoPlaySpeed) || 5000;
+      this.autoPlayInterval = null;
+      this.totalSlides = 0;
+      this._isProgrammatic = false;
+      this._progTO = null;
+    }
+
+    connectedCallback() {
+      this.track = this.querySelector('.ai-clients-carousel__track-{{ ai_gen_id }}');
+      this.trackContainer = this.querySelector('.ai-clients-carousel__track-container-{{ ai_gen_id }}');
+      this.cards = this.querySelectorAll('.ai-clients-carousel__card-{{ ai_gen_id }}');
+      this.prevBtn = this.querySelector('.ai-clients-carousel__navigation--prev-{{ ai_gen_id }}');
+      this.nextBtn = this.querySelector('.ai-clients-carousel__navigation--next-{{ ai_gen_id }}');
+      this.pagination = this.querySelector('.ai-clients-carousel__pagination-{{ ai_gen_id }}');
+
+      this.totalCards = this.cards.length;
+      if (this.totalCards === 0) return;
+
+      this.calculateSlides();
+      this.setupPagination();
+      this.setupEventListeners();
+      this.setupTouchSupport();
+      this.setupKeyboardNavigation();
+      this.updateNavigation();
+      this.setupAutoPlay();
+
+      // Ensure equal edges on mobile before initial scroll
+      if (!this.isDesktop) this.setupMobileEdges();
+
+      // Initial position
+      this.goToSlide(0);
+    }
+
+    /* ---------- Math helpers ---------- */
+    getCardWidth() {
+      return this.cards[0]?.offsetWidth || 300;
+    }
+    getGap() {
+      const st = getComputedStyle(this.track);
+      const g = parseFloat(st.gap) || parseFloat(st.columnGap);
+      if (!isNaN(g)) return g;
+      const varG = parseFloat(st.getPropertyValue('--gap-mobile'));
+      return isNaN(varG) ? 16 : varG;
+    }
+    getStep() { return this.getCardWidth() + this.getGap(); }
+
+    setupMobileEdges() {
+      if (this.isDesktop || !this.trackContainer || !this.cards[0]) return;
+      const cardW = this.getCardWidth();
+      const portW = this.trackContainer.clientWidth;
+      const edge = Math.max(0, (portW - cardW) / 2);
+      this.trackContainer.style.setProperty('--mobile-edge', `${edge}px`);
+    }
+
+    /* Slides = pages on desktop; per-card on mobile */
+    calculateSlides(){
+      this.totalSlides = this.isDesktop
+        ? Math.ceil(this.totalCards / this.cardsPerView)
+        : this.totalCards;
+    }
+
+    indexFromScroll() {
+      const step = this.getStep();
+      const raw = this.trackContainer.scrollLeft / step;
+      const idx = Math.round(raw);
+      return Math.max(0, Math.min(this.totalCards - 1, idx));
+    }
+
+    snapToNearest(updateDots = true) {
+      const idx = this.indexFromScroll();
+      this.goToSlide(idx, !updateDots);
+    }
+
+    /* ---------- UI wiring ---------- */
+    setupPagination(){
+      if (!this.pagination) return;
+      this.pagination.innerHTML = '';
+      for (let i=0; i<this.totalSlides; i++){
+        const dot=document.createElement('button');
+        dot.className=`ai-clients-carousel__dot-{{ ai_gen_id }}${i===0?' active':''}`;
+        dot.setAttribute('aria-label',`${this.isDesktop ? 'Go to page' : 'Go to card'} ${i+1}`);
+        dot.setAttribute('role','tab');
+        dot.addEventListener('click',()=>this.goToSlide(i));
+        this.pagination.appendChild(dot);
+      }
+    }
+
+    setupEventListeners(){
+      this.prevBtn?.addEventListener('click',e=>{e.preventDefault();this.prevSlide();});
+      this.nextBtn?.addEventListener('click',e=>{e.preventDefault();this.nextSlide();});
+
+      if (!this.isDesktop) this.setupMobileScrollTracking();
+
+      let rt;
+      window.addEventListener('resize',()=>{
+        clearTimeout(rt);
+        rt=setTimeout(()=>{
+          const wasDesktop=this.isDesktop;
+          this.isDesktop = window.innerWidth>=768;
+          const newCPV=this.isDesktop?(parseInt(this.dataset.cardsPerView)||3):1;
+
+          if (wasDesktop!==this.isDesktop || newCPV!==this.cardsPerView) {
+            this.cardsPerView=newCPV;
+            this.calculateSlides();
+            this.setupPagination();
+            if (!this.isDesktop) this.setupMobileEdges();
+            this.currentSlide = Math.min(this.currentSlide, this.totalSlides-1);
+            this.updateNavigation();
+            this.goToSlide(this.currentSlide);
+            if (!this.isDesktop) this.setupMobileScrollTracking();
+          } else if (!this.isDesktop) {
+            this.setupMobileEdges();
+            this.snapToNearest();
+          }
+        },200);
+      });
+
+      // Hover video preview on pointer devices
+      if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        this.cards.forEach(card=>{
+          const v=card.querySelector('video');
+          if (v){
+            card.addEventListener('mouseenter',()=>{ v.play().catch(()=>{}); });
+            card.addEventListener('mouseleave',()=>{ v.pause(); v.currentTime=0; });
+          }
+        });
+      }
+    }
+
+    /* Robust mobile rAF tracker + snap-back after momentum */
+    setupMobileScrollTracking(){
+      if (this.isDesktop || !this.trackContainer) return;
+
+      this.setupMobileEdges();
+
+      let ticking=false;
+      let scrollEndTimer=null;
+
+      const onScroll = () => {
+        if (this._isProgrammatic) return;
+        if (!ticking){
+          ticking=true;
+          requestAnimationFrame(()=>{
+            const idx=this.indexFromScroll();
+            if (idx!==this.currentSlide){
+              this.currentSlide=idx;
+              this.updateNavigationOnly();
+            }
+            ticking=false;
+          });
+        }
+        clearTimeout(scrollEndTimer);
+        scrollEndTimer=setTimeout(()=>{
+          if (!this._isProgrammatic){
+            this.snapToNearest(false);
+            this.updateNavigation();
+          }
+        },120);
+      };
+
+      this.trackContainer.addEventListener('touchstart',()=>this.pauseAutoPlay(),{passive:true});
+      this.trackContainer.addEventListener('scroll',onScroll,{passive:true});
+      this.trackContainer.addEventListener('touchend',()=>this.resumeAutoPlay(),{passive:true});
+
+      if ('onscrollend' in this.trackContainer) {
+        this.trackContainer.addEventListener('scrollend',()=>{
+          if (!this._isProgrammatic){
+            this.snapToNearest(false);
+            this.updateNavigation();
+          }
+        });
+      }
+    }
+
+    setupTouchSupport(){
+      // desktop swipe support
+      if (this.isDesktop) {
+        let sx=0,cx=0,drag=false,t0=0;
+        this.trackContainer.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;t0=Date.now();drag=true;this.pauseAutoPlay();},{passive:true});
+        this.trackContainer.addEventListener('touchmove',e=>{ if(!drag) return; cx=e.touches[0].clientX;},{passive:true});
+        this.trackContainer.addEventListener('touchend',()=>{ if(!drag) return; drag=false; const dx=sx-cx, dt=Date.now()-t0, fast=Math.abs(dx)/Math.max(dt,1)>0.5; if(Math.abs(dx)>50||fast){ dx>0?this.nextSlide():this.prevSlide(); } this.resumeAutoPlay();},{passive:true});
+      }
+    }
+
+    setupKeyboardNavigation(){ this.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft'){e.preventDefault();this.prevSlide();} else if(e.key==='ArrowRight'){e.preventDefault();this.nextSlide();} }); this.setAttribute('tabindex','0'); }
+
+    setupAutoPlay(){ if(!this.autoPlayEnabled) return; this.addEventListener('mouseenter',()=>this.pauseAutoPlay()); this.addEventListener('mouseleave',()=>this.resumeAutoPlay()); this.resumeAutoPlay(); }
+    pauseAutoPlay(){ if(this.autoPlayInterval){ clearInterval(this.autoPlayInterval); this.autoPlayInterval=null; } }
+    resumeAutoPlay(){ if(!this.autoPlayEnabled) return; this.pauseAutoPlay(); this.autoPlayInterval=setInterval(()=>{ this.nextSlide(); }, this.autoPlaySpeed); }
+
+    goToSlide(index, skipNavUpdate=false){
+      if (this.isTransitioning || this.totalCards===0) return;
+
+      const target = Math.max(0, Math.min(index, this.totalSlides-1));
+      this.currentSlide = target;
+      this.isTransitioning = true;
+
+      if (this.isDesktop){
+        // Center the desktop "page" inside the container
+        const styles = getComputedStyle(this.track);
+        const gap = parseFloat(styles.gap || 24);
+        const padL = parseFloat(styles.paddingLeft || 0);
+
+        const firstIndexOfPage = this.currentSlide * this.cardsPerView;
+        const firstCard = this.cards[firstIndexOfPage];
+        if (firstCard){
+          const cardW = firstCard.offsetWidth;
+          const pageW = (cardW * this.cardsPerView) + gap * (this.cardsPerView - 1);
+          const containerW = this.trackContainer.clientWidth;
+          const leftGutter = Math.max(0, (containerW - pageW)/2);
+          const offset = firstIndexOfPage * (cardW + gap) - leftGutter + padL;
+          this.track.style.transform = `translateX(-${offset}px)`;
+        }
+      } else {
+        // Mobile: pure step math; first card centers at scrollLeft=0
+        const step = this.getStep();
+        const x = this.currentSlide * step;
+
+        this._isProgrammatic = true;
+        this.trackContainer.scrollTo({ left:x, behavior:'smooth' });
+        clearTimeout(this._progTO);
+        this._progTO = setTimeout(()=>{ this._isProgrammatic = false; }, 400);
+      }
+
+      setTimeout(()=>{ this.isTransitioning=false; }, 350);
+      if (!skipNavUpdate) this.updateNavigation();
+    }
+
+    prevSlide(){ this.goToSlide(this.currentSlide-1); }
+    nextSlide(){ this.goToSlide(this.currentSlide+1); }
+
+    updateNavigationOnly(){
+      this.prevBtn && (this.prevBtn.disabled = this.currentSlide <= 0);
+      const last = this.totalSlides - 1;
+      this.nextBtn && (this.nextBtn.disabled = this.currentSlide >= last);
+      this.querySelectorAll('.ai-clients-carousel__dot-{{ ai_gen_id }}').forEach((d,idx)=>{
+        const a = idx===this.currentSlide;
+        d.classList.toggle('active', a);
+        d.setAttribute('aria-selected', a);
+      });
+    }
+    updateNavigation(){ this.updateNavigationOnly(); }
+
+    disconnectedCallback(){ this.pauseAutoPlay(); }
+  }
+  customElements.define('clients-carousel-{{ ai_gen_id }}', ClientsCarousel{{ ai_gen_id }});
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Our Clients",
+  "settings": [
+    { "type": "header", "content": "Content" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Our Clients" },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "background_color", "label": "Section background color", "default": "#000000" },
+    { "type": "color", "id": "heading_color", "label": "Heading color", "default": "#ffffff" },
+    { "type": "color", "id": "card_background", "label": "Card background", "default": "#1a1a1a" },
+    { "type": "color", "id": "card_text_color", "label": "Card text color", "default": "#ffffff" },
+    { "type": "color", "id": "card_subtext_color", "label": "Card subtext color", "default": "#cccccc" },
+    { "type": "color", "id": "location_color", "label": "Location text color", "default": "#cccccc" },
+    { "type": "color", "id": "button_text_color", "label": "Testimonial button text color", "default": "#000000" },
+    { "type": "color", "id": "testimonial_overlay_color", "label": "Testimonial overlay background", "default": "#000000" },
+    { "type": "color", "id": "testimonial_button_bg", "label": "Testimonial button background", "default": "#ffffff" },
+    { "type": "color", "id": "location_badge_color", "label": "Location badge text color", "default": "#deb887" },
+    { "type": "color", "id": "location_badge_bg", "label": "Location badge background", "default": "#614524" },
+    { "type": "color", "id": "client_info_overlay_bg", "label": "Client info overlay background", "default": "#000000" },
+
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "cards_per_view_desktop", "min": 1, "max": 5, "step": 1, "label": "Cards per view on desktop", "default": 3 },
+    { "type": "range", "id": "section_padding_top", "min": 60, "max": 140, "step": 4, "unit": "px", "label": "Section top padding", "default": 100 },
+    { "type": "range", "id": "section_padding", "min": 40, "max": 120, "step": 4, "unit": "px", "label": "Section bottom padding", "default": 80 },
+    { "type": "range", "id": "heading_spacing", "min": 40, "max": 120, "step": 4, "unit": "px", "label": "Heading bottom spacing", "default": 80 },
+    { "type": "range", "id": "heading_size", "min": 32, "max": 64, "step": 2, "unit": "px", "label": "Heading size", "default": 48 },
+    { "type": "range", "id": "card_border_radius", "min": 8, "max": 32, "step": 2, "unit": "px", "label": "Card border radius", "default": 24 },
+
+    { "type": "header", "content": "Animation" },
+    { "type": "checkbox", "id": "enable_autoplay", "label": "Enable autoplay", "default": false },
+    { "type": "range", "id": "autoplay_speed", "min": 3000, "max": 9500, "step": 500, "unit": "ms", "label": "Autoplay speed", "default": 5000 },
+
+    { "type": "header", "content": "Client 1" },
+    { "type": "checkbox", "id": "client_1_enabled", "label": "Enable client 1", "default": true },
+    { "type": "image_picker", "id": "client_1_media", "label": "Product image" },
+    { "type": "text", "id": "client_1_location", "label": "Location", "default": "Makati, Metro Manila" },
+    { "type": "text", "id": "client_1_product_name", "label": "Product name", "default": "Broen Obsidian" },
+    { "type": "text", "id": "client_1_name", "label": "Client name", "default": "Maria Santos" },
+    { "type": "textarea", "id": "client_1_testimonial", "label": "Testimonial", "default": "Installation was seamless and the lock works perfectly. Great security upgrade for our home!" },
+    { "type": "text", "id": "client_1_button_label", "label": "Button label", "default": "View Project" },
+    { "type": "url", "id": "client_1_link", "label": "Link" },
+    { "type": "product", "id": "client_1_product_ref", "label": "Product (metafield source)" },
+    { "type": "text", "id": "client_1_product_meta", "label": "Product handle (alternative)" },
+    { "type": "text", "id": "client_1_product_name_override", "label": "Product name override" },
+    { "type": "url", "id": "client_1_link_fallback", "label": "Fallback link" },
+
+    { "type": "header", "content": "Client 2" },
+    { "type": "checkbox", "id": "client_2_enabled", "label": "Enable client 2", "default": true },
+    { "type": "image_picker", "id": "client_2_media", "label": "Product image" },
+    { "type": "text", "id": "client_2_location", "label": "Location", "default": "BGC, Taguig" },
+    { "type": "text", "id": "client_2_product_name", "label": "Product name", "default": "Broen Elite" },
+    { "type": "text", "id": "client_2_name", "label": "Client name", "default": "Tech Solutions Inc." },
+    { "type": "textarea", "id": "client_2_testimonial", "label": "Testimonial", "default": "Perfect for our office. The fingerprint scanner is fast and the design looks very professional." },
+    { "type": "text", "id": "client_2_button_label", "label": "Button label", "default": "View Project" },
+    { "type": "url", "id": "client_2_link", "label": "Link" },
+    { "type": "product", "id": "client_2_product_ref", "label": "Product (metafield source)" },
+    { "type": "text", "id": "client_2_product_meta", "label": "Product handle (alternative)" },
+    { "type": "text", "id": "client_2_product_name_override", "label": "Product name override" },
+    { "type": "url", "id": "client_2_link_fallback", "label": "Fallback link" },
+
+    { "type": "header", "content": "Client 3" },
+    { "type": "checkbox", "id": "client_3_enabled", "label": "Enable client 3", "default": true },
+    { "type": "image_picker", "id": "client_3_media", "label": "Product image" },
+    { "type": "text", "id": "client_3_location", "label": "Location", "default": "Quezon City" },
+    { "type": "text", "id": "client_3_product_name", "label": "Product name", "default": "Broen Pro" },
+    { "type": "text", "id": "client_3_name", "label": "Client name", "default": "John Dela Cruz" },
+    { "type": "textarea", "id": "client_3_testimonial", "label": "Testimonial", "default": "Great value for money. Easy to use and installation was quick. Highly recommended for apartments." },
+    { "type": "text", "id": "client_3_button_label", "label": "Button label", "default": "View Project" },
+    { "type": "url", "id": "client_3_link", "label": "Link" },
+    { "type": "product", "id": "client_3_product_ref", "label": "Product (metafield source)" },
+    { "type": "text", "id": "client_3_product_meta", "label": "Product handle (alternative)" },
+    { "type": "text", "id": "client_3_product_name_override", "label": "Product name override" },
+    { "type": "url", "id": "client_3_link_fallback", "label": "Fallback link" },
+
+    { "type": "header", "content": "Client 4" },
+    { "type": "checkbox", "id": "client_4_enabled", "label": "Enable client 4", "default": true },
+    { "type": "image_picker", "id": "client_4_media", "label": "Product image" },
+    { "type": "text", "id": "client_4_location", "label": "Location", "default": "Cebu" },
+    { "type": "text", "id": "client_4_product_name", "label": "Product name", "default": "Broen Guard" },
+    { "type": "text", "id": "client_4_name", "label": "Client name", "default": "Paradise Resort" },
+    { "type": "textarea", "id": "client_4_testimonial", "label": "Testimonial", "default": "Perfect for our resort. Weather-resistant and handles heavy usage. Guests love the modern touch." },
+    { "type": "text", "id": "client_4_button_label", "label": "Button label", "default": "View Project" },
+    { "type": "url", "id": "client_4_link", "label": "Link" },
+    { "type": "product", "id": "client_4_product_ref", "label": "Product (metafield source)" },
+    { "type": "text", "id": "client_4_product_meta", "label": "Product handle (alternative)" },
+    { "type": "text", "id": "client_4_product_name_override", "label": "Product name override" },
+    { "type": "url", "id": "client_4_link_fallback", "label": "Fallback link" },
+
+    { "type": "header", "content": "Client 5" },
+    { "type": "checkbox", "id": "client_5_enabled", "label": "Enable client 5", "default": true },
+    { "type": "image_picker", "id": "client_5_media", "label": "Product image" },
+    { "type": "text", "id": "client_5_location", "label": "Location", "default": "Ortigas, Pasig" },
+    { "type": "text", "id": "client_5_product_name", "label": "Product name", "default": "Broen Secure" },
+    { "type": "text", "id": "client_5_name", "label": "Client name", "default": "Corporate Plaza" },
+    { "type": "textarea", "id": "client_5_testimonial", "label": "Testimonial", "default": "Innovative solution for our sliding entrance. The team was professional and the product is top-notch." },
+    { "type": "text", "id": "client_5_button_label", "label": "Button label", "default": "View Project" },
+    { "type": "url", "id": "client_5_link", "label": "Link" },
+    { "type": "product", "id": "client_5_product_ref", "label": "Product (metafield source)" },
+    { "type": "text", "id": "client_5_product_meta", "label": "Product handle (alternative)" },
+    { "type": "text", "id": "client_5_product_name_override", "label": "Product name override" },
+    { "type": "url", "id": "client_5_link_fallback", "label": "Fallback link" },
+
+    { "type": "header", "content": "Client 6" },
+    { "type": "checkbox", "id": "client_6_enabled", "label": "Enable client 6" },
+    { "type": "image_picker", "id": "client_6_media", "label": "Product image" },
+    { "type": "text", "id": "client_6_location", "label": "Location" },
+    { "type": "text", "id": "client_6_product_name", "label": "Product name" },
+    { "type": "text", "id": "client_6_name", "label": "Client name" },
+    { "type": "textarea", "id": "client_6_testimonial", "label": "Testimonial" },
+    { "type": "text", "id": "client_6_button_label", "label": "Button label" },
+    { "type": "url", "id": "client_6_link", "label": "Link" },
+    { "type": "product", "id": "client_6_product_ref", "label": "Product (metafield source)" },
+    { "type": "text", "id": "client_6_product_meta", "label": "Product handle (alternative)" },
+    { "type": "text", "id": "client_6_product_name_override", "label": "Product name override" },
+    { "type": "url", "id": "client_6_link_fallback", "label": "Fallback link" },
+
+    { "type": "header", "content": "Client 7" },
+    { "type": "checkbox", "id": "client_7_enabled", "label": "Enable client 7" },
+    { "type": "image_picker", "id": "client_7_media", "label": "Product image" },
+    { "type": "text", "id": "client_7_location", "label": "Location" },
+    { "type": "text", "id": "client_7_product_name", "label": "Product name" },
+    { "type": "text", "id": "client_7_name", "label": "Client name" },
+    { "type": "textarea", "id": "client_7_testimonial", "label": "Testimonial" },
+    { "type": "text", "id": "client_7_button_label", "label": "Button label" },
+    { "type": "url", "id": "client_7_link", "label": "Link" },
+    { "type": "product", "id": "client_7_product_ref", "label": "Product (metafield source)" },
+    { "type": "text", "id": "client_7_product_meta", "label": "Product handle (alternative)" },
+    { "type": "text", "id": "client_7_product_name_override", "label": "Product name override" },
+    { "type": "url", "id": "client_7_link_fallback", "label": "Fallback link" },
+
+    { "type": "header", "content": "Client 8" },
+    { "type": "checkbox", "id": "client_8_enabled", "label": "Enable client 8" },
+    { "type": "image_picker", "id": "client_8_media", "label": "Product image" },
+    { "type": "text", "id": "client_8_location", "label": "Location" },
+    { "type": "text", "id": "client_8_product_name", "label": "Product name" },
+    { "type": "text", "id": "client_8_name", "label": "Client name" },
+    { "type": "textarea", "id": "client_8_testimonial", "label": "Testimonial" },
+    { "type": "text", "id": "client_8_button_label", "label": "Button label" },
+    { "type": "url", "id": "client_8_link", "label": "Link" },
+    { "type": "product", "id": "client_8_product_ref", "label": "Product (metafield source)" },
+    { "type": "text", "id": "client_8_product_meta", "label": "Product handle (alternative)" },
+    { "type": "text", "id": "client_8_product_name_override", "label": "Product name override" },
+    { "type": "url", "id": "client_8_link_fallback", "label": "Fallback link" }
+  ],
+  "presets": [{ "name": "Our Clients" }],
+  "tag": null
+}
+{% endschema %}

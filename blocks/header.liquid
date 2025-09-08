@@ -1,0 +1,280 @@
+{%- comment -%}
+  Broen — Frosted Header (Section)
+  - Menu: exact menu selected in the section (object or handle)
+  - Logo: Section logo → Theme logo → text fallback
+  - Fixed at top; spacer height is measured & clamped
+  - Two-row layout: logo row over menu row; mobile drawer
+{%- endcomment -%}
+
+<style>
+/* ===== Broen — Glass header (logo row over menu row) ===== */
+#shopify-section-{{ section.id }}{ margin-top:0 !important; }
+main#MainContent{ margin-top:0 !important; padding-top:0 !important; }
+
+:root{
+  --broen-max-w: 1380px;
+  --broen-px: 1.25rem;
+  --broen-py: .85rem;
+  --broen-gap: .38rem;
+
+  --broen-brand-size: clamp(28px, 2.2vw + 18px, 36px);
+  --broen-brand-weight: 800;
+  --broen-nav-size: 15.5px;
+  --broen-nav-weight: 600;
+
+  --broen-fg: #fff;
+  --broen-fg-dim: rgba(255,255,255,.86);
+  --broen-bg: rgba(12,12,12,.78);
+  --broen-border: rgba(255,255,255,.09);
+}
+
+/* The section wrapper has no vertical footprint of its own */
+.shopify-section.broen-header-section{ margin:0 !important; padding:0 !important; min-height:0 !important; }
+
+/* Fixed + frosted header bar */
+.broen-header__bar{
+  position: fixed;
+  top: 0; left: 0; right: 0; /* top-only prevents full-viewport overlay */
+  z-index: 10000;
+  display: flex; flex-direction: column; gap: var(--broen-gap);
+  isolation: isolate;
+  color: var(--broen-fg);
+}
+.broen-header__bar::before{
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0)), var(--broen-bg);
+  -webkit-backdrop-filter: saturate(180%) blur({{ section.settings.blur_strength | default: 22 }}px);
+  backdrop-filter: saturate(180%) blur({{ section.settings.blur_strength | default: 22 }}px);
+  border-bottom: 1px solid var(--broen-border);
+  box-shadow: 0 12px 32px rgba(0,0,0,.32);
+  pointer-events: none;
+}
+
+/* Inner containers share baseline */
+.broen-header__row,
+.broen-header__nav{
+  position: relative; z-index: 1;
+  max-width: var(--broen-max-w); margin: 0 auto;
+  padding: var(--broen-py) var(--broen-px);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display","SF Pro Text", Inter, Roboto, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+}
+
+/* Row 1: logo + controls */
+.broen-header__row{ display: grid; align-items: center; grid-template-columns: 1fr auto; }
+.broen-header__row[data-logo-align="left"]   .broen-header__logo{ justify-self:start; }
+.broen-header__row[data-logo-align="center"] .broen-header__logo{ justify-self:center; }
+.broen-header__row[data-logo-align="right"]  .broen-header__logo{ justify-self:end; }
+
+.broen-header__logo{ display:inline-flex; align-items:center; gap:.5rem; text-decoration:none; color:inherit; }
+.broen-header__logo img{ display:block; height:auto; max-width: {{ section.settings.logo_width | default: 160 }}px; }
+.broen-header__brand-fallback{ font-weight: var(--broen-brand-weight); font-size: var(--broen-brand-size); line-height:1.08; letter-spacing:-.01em; }
+
+.broen-header__controls{ display:inline-flex; align-items:center; gap:.75rem; justify-self:end; color:inherit; }
+.broen-header__cart{ position:relative; display:inline-flex; align-items:center; padding:8px; border-radius:10px; text-decoration:none; transition: background .18s ease, transform .18s ease; }
+.broen-header__cart:hover{ background: rgba(255,255,255,.06); transform: translateY(-1px); }
+.broen-header__count{ position:absolute; top:2px; right:2px; display:grid; place-items:center; width:16px; height:16px; border-radius:999px; background:#fff; color:#000; font-size:.65rem; font-weight:700; }
+
+/* Burger */
+.broen-header__hamburger{ display:inline-flex; flex-direction:column; gap:3px; padding:8px; border:0; background:transparent; cursor:pointer; border-radius:10px; }
+.broen-header__hamburger span{ width:22px; height:2px; background:currentColor; display:block; transition: transform .25s ease, opacity .25s ease; transform-origin:center; }
+.broen-header__hamburger.is-active span:nth-child(1){ transform: rotate(45deg) translate(4px,4px); }
+.broen-header__hamburger.is-active span:nth-child(2){ opacity: 0; }
+.broen-header__hamburger.is-active span:nth-child(3){ transform: rotate(-45deg) translate(4px,-4px); }
+
+/* Row 2: desktop nav — under the logo */
+.broen-header__nav{ display:none; padding-top:0; padding-bottom:.9rem; }
+.broen-header__nav[data-nav-align="left"]   { display:flex; justify-content:flex-start; gap:1.4rem; flex-wrap:wrap; }
+.broen-header__nav[data-nav-align="center"] { display:flex; justify-content:center; gap:1.4rem; flex-wrap:wrap; }
+.broen-header__nav[data-nav-align="right"]  { display:flex; justify-content:flex-end; gap:1.4rem; flex-wrap:wrap; }
+
+.broen-header__nav a{
+  color: var(--broen-fg-dim); text-decoration:none;
+  font-weight: var(--broen-nav-weight); font-size: var(--broen-nav-size); letter-spacing:.005em;
+  padding:.2rem 0; position:relative; transition: color .15s ease, transform .15s ease;
+}
+.broen-header__nav a:hover{ color: var(--broen-fg); transform: translateY(-1px); }
+.broen-header__nav a.is-active::after{
+  content:""; position:absolute; left:0; right:0; bottom:-.45rem; height:2px;
+  background: currentColor; opacity:.95; border-radius:2px;
+}
+
+/* Drawer */
+.broen-mobile-overlay{ position:fixed; inset:0; z-index:9998; background: rgba(12,12,12,.55); -webkit-backdrop-filter:saturate(200%) blur({{ section.settings.overlay_blur | default: 40 }}px); backdrop-filter:saturate(200%) blur({{ section.settings.overlay_blur | default: 40 }}px); opacity:0; visibility:hidden; transition:opacity .25s ease, visibility .25s ease; }
+.broen-mobile-overlay.is-open{ opacity:1; visibility:visible; }
+.broen-mobile-drawer{
+  position:fixed; top:0; left:0; height:100vh; width:min(86vw, 320px);
+  transform:translateX(-100%); transition:transform .28s ease; z-index:9999;
+  background: rgba(10,10,10,.92);
+  -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
+  border-right:1px solid var(--broen-border); box-shadow: 0 18px 48px rgba(0,0,0,.45); color:#fff; overflow-y:auto;
+}
+.broen-mobile-drawer.is-open{ transform:translateX(0); }
+.broen-mobile-drawer__inner{ padding:84px var(--broen-px) 1.5rem; }
+.broen-mobile-drawer__nav{ display:flex; flex-direction:column; }
+.broen-mobile-drawer__nav a{ color:#fff; text-decoration:none; font-weight: var(--broen-nav-weight); font-size: var(--broen-nav-size); padding:.9rem 0; border-bottom:1px solid rgba(255,255,255,.08); }
+
+/* Spacer: exact height of fixed header (clamped) */
+.broen-header-spacer{ height: var(--broen-h, 0px); }
+
+@media (min-width:768px){
+  .broen-header__nav{ display:flex; }
+  .broen-header__hamburger{ display:none; }
+}
+
+@supports not (backdrop-filter: blur(1px)){
+  .broen-header__bar::before,
+  .broen-mobile-overlay,
+  .broen-mobile-drawer{ background:#111; }
+}
+</style>
+
+<!-- inline icon sprite -->
+<svg style="display:none">
+  <symbol id="broen-icon-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+  </symbol>
+</svg>
+
+{%- comment -%} MENU RESOLVER {%- endcomment -%}
+{% liquid
+  assign nav_links   = blank
+  assign menu_handle = blank
+
+  if section.settings.menu != blank
+    if section.settings.menu.links != blank
+      assign nav_links = section.settings.menu.links
+    else
+      assign menu_handle = section.settings.menu
+    endif
+  endif
+
+  if nav_links == blank and menu_handle != blank and linklists[menu_handle] and linklists[menu_handle].links != blank
+    assign nav_links = linklists[menu_handle].links
+  endif
+%}
+
+<header class="broen-header__bar" id="broenHeader-{{ section.id }}">
+  <!-- Row 1: logo + cart + burger -->
+  <div class="broen-header__row" data-logo-align="{{ section.settings.logo_align }}">
+    <a class="broen-header__logo" href="{{ routes.root_url }}">
+      {% if section.settings.logo != blank %}
+        {{ section.settings.logo
+           | image_url: width: section.settings.logo_width
+           | image_tag: alt: shop.name, loading: 'eager', widths: '180,360,540,720' }}
+      {% elsif settings.logo != blank %}
+        {{ settings.logo
+           | image_url: width: section.settings.logo_width
+           | image_tag: alt: shop.name, loading: 'eager', widths: '180,360,540,720' }}
+      {% else %}
+        <span class="broen-header__brand-fallback">{{ shop.name }}</span>
+      {% endif %}
+    </a>
+
+    <div class="broen-header__controls">
+      <a class="broen-header__cart" href="{{ routes.cart_url }}" aria-label="{{ 'templates.cart.cart' | t }}">
+        <svg width="22" height="22" aria-hidden="true"><use href="#broen-icon-cart"></use></svg>
+        {% if cart.item_count > 0 %}<span class="broen-header__count">{{ cart.item_count }}</span>{% endif %}
+      </a>
+
+      <button class="broen-header__hamburger"
+              id="broenHamburger-{{ section.id }}"
+              aria-label="Open menu"
+              aria-controls="broenMobileDrawer-{{ section.id }}"
+              aria-expanded="false"
+              type="button">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Row 2: desktop nav -->
+  {% if nav_links != blank %}
+    <nav class="broen-header__nav" data-nav-align="{{ section.settings.nav_align }}" aria-label="Primary navigation">
+      {% for link in nav_links %}
+        {% assign active_now = false %}
+        {% if link.current or link.active %}{% assign active_now = true %}{% endif %}
+        <a href="{{ link.url }}" class="{% if active_now %}is-active{% endif %}">{{ link.title }}</a>
+      {% endfor %}
+    </nav>
+  {% endif %}
+</header>
+
+<!-- Spacer to offset fixed header -->
+<div id="broenHeaderSpacer-{{ section.id }}" class="broen-header-spacer" aria-hidden="true"></div>
+
+<!-- Mobile drawer -->
+<div class="broen-mobile-overlay" id="broenMobileOverlay-{{ section.id }}" aria-hidden="true"></div>
+<aside class="broen-mobile-drawer" id="broenMobileDrawer-{{ section.id }}" aria-hidden="true">
+  <div class="broen-mobile-drawer__inner">
+    <nav class="broen-mobile-drawer__nav" aria-label="Mobile navigation">
+      {% if nav_links != blank %}
+        {% for link in nav_links %}<a href="{{ link.url }}">{{ link.title }}</a>{% endfor %}
+      {% endif %}
+    </nav>
+  </div>
+</aside>
+
+<script>
+(function(){
+  const sid     = "{{ section.id }}";
+  const bar     = document.getElementById('broenHeader-' + sid);
+  const spacer  = document.getElementById('broenHeaderSpacer-' + sid);
+  const burger  = document.getElementById('broenHamburger-' + sid);
+  const overlay = document.getElementById('broenMobileOverlay-' + sid);
+  const drawer  = document.getElementById('broenMobileDrawer-' + sid);
+
+  // CLAMPED spacer to eliminate giant blank chunk
+  function setHeaderSpacer(){
+    if(!bar || !spacer) return;
+    const h = Math.round(bar.getBoundingClientRect().height);
+    const clamped = Math.max(56, Math.min(h, 220));
+    spacer.style.setProperty('--broen-h', clamped + 'px');
+  }
+
+  setHeaderSpacer();
+  window.addEventListener('resize', setHeaderSpacer);
+  if (window.ResizeObserver){ new ResizeObserver(setHeaderSpacer).observe(bar); }
+  if (document.fonts && document.fonts.ready){ document.fonts.ready.then(setHeaderSpacer); }
+  window.addEventListener('load', setHeaderSpacer);
+
+  function openMenu(open){
+    const isOpen = open ?? !drawer.classList.contains('is-open');
+    drawer.classList.toggle('is-open', isOpen);
+    overlay.classList.toggle('is-open', isOpen);
+    burger.classList.toggle('is-active', isOpen);
+    burger.setAttribute('aria-expanded', String(isOpen));
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  }
+  burger && burger.addEventListener('click', () => openMenu());
+  overlay && overlay.addEventListener('click', () => openMenu(false));
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') openMenu(false); });
+
+  document.addEventListener('shopify:section:load', (e)=>{ if(e.detail?.sectionId === sid){ openMenu(false); setHeaderSpacer(); } });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Header (Broen)",
+  "class": "broen-header-section",
+  "settings": [
+    { "type": "link_list", "id": "menu", "label": "Primary menu", "info": "Used for the row below the logo and the mobile drawer." },
+    { "type": "image_picker", "id": "logo", "label": "Logo image" },
+    { "type": "range", "id": "logo_width", "label": "Logo max width", "min": 60, "max": 260, "step": 4, "unit": "px", "default": 160 },
+    { "type": "select", "id": "logo_align", "label": "Logo alignment", "default": "left",
+      "options": [ { "value": "left", "label": "Left" }, { "value": "center", "label": "Center" }, { "value": "right", "label": "Right" } ] },
+    { "type": "select", "id": "nav_align", "label": "Desktop nav alignment (below logo)", "default": "left",
+      "options": [ { "value": "left", "label": "Left" }, { "value": "center", "label": "Center" }, { "value": "right", "label": "Right" } ] },
+
+    { "type": "header", "content": "Frosted glass" },
+    { "type": "range", "id": "blur_strength", "min": 5, "max": 40, "step": 1, "unit": "px", "label": "Blur strength", "default": 22 },
+
+    { "type": "header", "content": "Mobile overlay" },
+    { "type": "range", "id": "overlay_blur", "min": 0, "max": 50, "step": 2, "unit": "px", "label": "Overlay blur", "default": 40 }
+  ],
+  "presets": [
+    { "name": "Header (Broen)" }
+  ]
+}
+{% endschema %}

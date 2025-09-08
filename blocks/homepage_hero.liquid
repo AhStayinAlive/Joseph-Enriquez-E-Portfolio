@@ -1,0 +1,369 @@
+{% assign ai_gen_id = block.id | replace: '_' , '' | downcase %}
+
+{% style %}
+  :root {
+    --btn-radius: {{ block.settings.button_border_radius | default: 24 }}px;
+    --lg-blur: 18px;
+    --lg-saturate: 180%;
+    --lg-border: hsla(0,0%,100%,.22);
+    --lg-shadow: rgba(0,0,0,.25);
+  }
+
+  {%- assign overlay_alpha = block.settings.overlay_opacity | default: 0 | divided_by: 100.0 -%}
+
+  /* ---------- Wrapper: height controlled via Theme Editor ---------- */
+  .ai-video-hero-{{ ai_gen_id }} {
+    position: relative;
+    min-height: {{ block.settings.section_height | default: 600 }}px; /* desktop control */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 0; /* baseline; children/pseudo-element manage their own z */
+  }
+
+  /* PSEUDO OVERLAY — guaranteed above video, below content */
+  .ai-video-hero-{{ ai_gen_id }}::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+
+    /* Color with embedded alpha (and rgba fallback) */
+    background: {{ block.settings.overlay_color | default: '#000000' | color_modify: 'alpha', overlay_alpha }};
+    background: rgba(
+      {{ block.settings.overlay_color | default: '#000000' | color_extract: 'red' }},
+      {{ block.settings.overlay_color | default: '#000000' | color_extract: 'green' }},
+      {{ block.settings.overlay_color | default: '#000000' | color_extract: 'blue' }},
+      {{ overlay_alpha }}
+    );
+  }
+
+  /* If the legacy overlay <div> exists in markup, hide it so we don't double-dim */
+  .ai-video-hero-overlay-{{ ai_gen_id }} {
+    display: none !important;
+  }
+
+  /* Mobile height uses mobile slider (no 100vh override anymore) */
+  @media (max-width: 768px) {
+    .ai-video-hero-{{ ai_gen_id }} {
+      min-height: {{ block.settings.section_height_mobile | default: 500 }}px; /* mobile control */
+      padding: 0; /* keep edge-to-edge background */
+    }
+  }
+
+  /* ---------- Background media fills the wrapper ---------- */
+  .ai-video-hero-background-{{ ai_gen_id }} {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .ai-video-hero-background-{{ ai_gen_id }} video,
+  .ai-video-hero-background-{{ ai_gen_id }} img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ---------- Content ---------- */
+  .ai-video-hero-content-{{ ai_gen_id }} {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    padding: 60px 20px;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Headline (multiline only) */
+  .ai-video-hero-headline-{{ ai_gen_id }} {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: .95;
+    margin: 0 0 40px;
+    font-size: clamp({{ block.settings.headline_size_mobile | default: 48 }}px, 8vw, {{ block.settings.headline_size_desktop | default: 80 }}px);
+    color: {{ block.settings.headline_color | default: '#ffffff' }};
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    text-align: {{ block.settings.text_alignment | default: 'center' }};
+  }
+  .ai-video-hero-headline-{{ ai_gen_id }} .line { display: block; }
+  .ai-video-hero-headline-{{ ai_gen_id }} .line + .line { margin-top: 0.15em; }
+
+  /* CTAs */
+  .ai-video-hero-ctas-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: calc(16px * {{ block.settings.button_spacing_scale | default: 1 }});
+    align-items: center;
+    z-index: 4;
+  }
+  .ai-video-hero-primary-ctas-{{ ai_gen_id }},
+  .ai-video-hero-secondary-ctas-{{ ai_gen_id }} {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: calc(16px * {{ block.settings.button_spacing_scale | default: 1 }});
+  }
+  .ai-video-hero-secondary-ctas-{{ ai_gen_id }} {
+    gap: calc(12px * {{ block.settings.button_spacing_scale | default: 1 }});
+  }
+
+  .ai-video-hero-btn-{{ ai_gen_id }} {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif !important;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 16px !important;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: normal;
+    max-width: 100%;
+    min-height: 44px;
+    padding: 14px 28px !important;
+    border-radius: var(--btn-radius) !important;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+
+  .ai-video-hero-btn-primary-solid-{{ ai_gen_id }},
+  .ai-video-hero-btn-primary-outline-{{ ai_gen_id }} {
+    color: {{ block.settings.primary_button_text | default: '#000000' }} !important;
+    background: {{ block.settings.primary_button_bg | default: '#ffffff' }} !important;
+    border: 1px solid {{ block.settings.primary_button_border | default: '#ffffff' }} !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15) !important;
+  }
+  .ai-video-hero-btn-primary-solid-{{ ai_gen_id }}:hover,
+  .ai-video-hero-btn-primary-outline-{{ ai_gen_id }}:hover {
+    transform: translateY(-1px);
+    background: {{ block.settings.primary_button_hover | default: '#f8f8f8' }} !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,.2) !important;
+  }
+
+  .ai-video-hero-btn-secondary-{{ ai_gen_id }} {
+    color: {{ block.settings.secondary_text | default: '#ffffff' }} !important;
+    background: linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,.18)) !important;
+    backdrop-filter: saturate(var(--lg-saturate)) blur(var(--lg-blur)) !important;
+    -webkit-backdrop-filter: saturate(var(--lg-saturate)) blur(var(--lg-blur)) !important;
+    box-shadow: 0 6px 18px var(--lg-shadow), inset 0 1px 0 rgba(255,255,255,.12) !important;
+    border: 1px solid var(--lg-border) !important;
+  }
+  .ai-video-hero-btn-secondary-{{ ai_gen_id }}:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(0deg, rgba(255,255,255,.24), rgba(255,255,255,.24)) !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.14) !important;
+  }
+
+  /* Mobile text/layout tweaks (keep height from slider above) */
+  @media (max-width: 768px) {
+    .ai-video-hero-content-{{ ai_gen_id }} {
+      padding: 60px 20px 100px;
+    }
+    .ai-video-hero-headline-{{ ai_gen_id }} {
+      margin-bottom: 60px;
+      font-size: clamp({{ block.settings.headline_size_mobile | default: 48 }}px, 8vw, {{ block.settings.headline_size_mobile | default: 48 }}px);
+    }
+    .ai-video-hero-primary-ctas-{{ ai_gen_id }},
+    .ai-video-hero-secondary-ctas-{{ ai_gen_id }} {
+      flex-direction: column;
+      width: 100%;
+      gap: 16px;
+    }
+    .ai-video-hero-btn-{{ ai_gen_id }} {
+      width: 100%;
+      max-width: none;
+      padding: 16px 28px !important;
+    }
+    .ai-video-hero-ctas-{{ ai_gen_id }} {
+      gap: 24px;
+      width: 100%;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-video-hero-{{ ai_gen_id }}">
+  {% if block.settings.background_video != blank %}
+    <div class="ai-video-hero-background-{{ ai_gen_id }}">
+      <video autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+        <source src="{{ block.settings.background_video }}" type="video/mp4">
+      </video>
+    </div>
+  {% elsif block.settings.fallback_image != blank %}
+    <div class="ai-video-hero-background-{{ ai_gen_id }}">
+      <img src="{{ block.settings.fallback_image | image_url: width: 1920 }}" alt="">
+    </div>
+  {% else %}
+    <div
+      class="ai-video-hero-background-{{ ai_gen_id }}"
+      style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);">
+    </div>
+  {% endif %}
+
+  <div class="ai-video-hero-overlay-{{ ai_gen_id }}"></div>
+
+  <div class="ai-video-hero-content-{{ ai_gen_id }}">
+    {% if block.settings.headline_multiline != blank %}
+      <h1 class="ai-video-hero-headline-{{ ai_gen_id }}">
+        {%- assign lines = block.settings.headline_multiline | strip | newline_to_br | split: '<br />' -%}
+        {%- for line in lines -%}
+          {%- assign l = line | strip -%}
+          {%- if l != '' -%}
+            <span class="line">{{ l }}</span>
+          {%- endif -%}
+        {%- endfor -%}
+      </h1>
+    {% endif %}
+
+    <div class="ai-video-hero-ctas-{{ ai_gen_id }}">
+      <div class="ai-video-hero-primary-ctas-{{ ai_gen_id }}">
+        <a
+          id="hero-link-primary-solid-{{ ai_gen_id }}"
+          href="{{ block.settings.primary_solid_url | default: '#' }}"
+          class="ai-video-hero-btn-{{ ai_gen_id }} ai-video-hero-btn-primary-solid-{{ ai_gen_id }}">
+          {{ block.settings.primary_solid_text | default: 'Browse Products' }}
+        </a>
+
+        <a
+          id="hero-link-primary-outline-{{ ai_gen_id }}"
+          href="{{ block.settings.primary_outline_url | default: '#' }}"
+          class="ai-video-hero-btn-{{ ai_gen_id }} ai-video-hero-btn-primary-outline-{{ ai_gen_id }}">
+          {{ block.settings.primary_outline_text | default: 'Choose a Smart Lock' }}
+        </a>
+      </div>
+
+      <div class="ai-video-hero-secondary-ctas-{{ ai_gen_id }}">
+        <!-- Secondary #1 (normal link; external opened in new tab via script) -->
+        <a
+          id="hero-link-secondary-1-{{ ai_gen_id }}"
+          href="{{ block.settings.secondary_url_1 | default: '#' }}"
+          class="ai-video-hero-btn-{{ ai_gen_id }} ai-video-hero-btn-secondary-{{ ai_gen_id }}">
+          {{ block.settings.secondary_text_1 | default: 'Check My Door' }}
+        </a>
+
+        <!-- Secondary #2 (OPEN PDF IN NEW TAB) -->
+        {% assign dl_url = block.settings.secondary_file_2 %}
+        {% if dl_url != blank %}
+          <a
+            id="hero-link-secondary-2-{{ ai_gen_id }}"
+            href="{{ dl_url }}"
+            class="ai-video-hero-btn-{{ ai_gen_id }} ai-video-hero-btn-secondary-{{ ai_gen_id }}">
+            {{ block.settings.secondary_text_2 | default: 'Download Catalog' }}
+          </a>
+        {% else %}
+          <span
+            class="ai-video-hero-btn-{{ ai_gen_id }} ai-video-hero-btn-secondary-{{ ai_gen_id }}"
+            role="button" aria-disabled="true" tabindex="-1"
+            title="No file URL set in Theme Editor">
+            {{ block.settings.secondary_text_2 | default: 'Download Catalog' }}
+          </span>
+        {% endif %}
+
+        <!-- Secondary #3 (normal link; external opened in new tab via script) -->
+        <a
+          id="hero-link-secondary-3-{{ ai_gen_id }}"
+          href="{{ block.settings.secondary_url_3 | default: '#' }}"
+          class="ai-video-hero-btn-{{ ai_gen_id }} ai-video-hero-btn-secondary-{{ ai_gen_id }}">
+          {{ block.settings.secondary_text_3 | default: 'Contact Us' }}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // External link auto-target (same-tab for internal, new tab for external).
+  (function(){
+    function guardExternal(anchor){
+      if(!anchor) return;
+      var href = anchor.getAttribute('href');
+      if(!href || href === '#') return;
+      try{
+        // ignore non-http(s) protocols
+        if(!/^https?:/i.test(href)) return;
+        var url = new URL(href, window.location.origin);
+        var external = url.host !== window.location.host;
+        if(external){
+          anchor.setAttribute('target','_blank');
+          anchor.setAttribute('rel','noopener noreferrer');
+          var inEditor = !!(window.Shopify && Shopify.designMode);
+          if(inEditor){
+            anchor.addEventListener('click', function(e){
+              e.preventDefault();
+              alert('External links are blocked inside the Theme Editor. Use Preview to test.');
+            }, { capture:true });
+          }
+        }
+      }catch(e){}
+    }
+
+    guardExternal(document.getElementById('hero-link-primary-solid-{{ ai_gen_id }}'));
+    guardExternal(document.getElementById('hero-link-primary-outline-{{ ai_gen_id }}'));
+    guardExternal(document.getElementById('hero-link-secondary-1-{{ ai_gen_id }}'));
+    guardExternal(document.getElementById('hero-link-secondary-2-{{ ai_gen_id }}')); // now included
+    guardExternal(document.getElementById('hero-link-secondary-3-{{ ai_gen_id }}'));
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "AI Video Hero",
+  "settings": [
+    { "type": "header", "content": "Media" },
+    { "type": "text", "id": "background_video", "label": "Background video URL", "info": "Upload to Content → Files, then paste the URL." },
+    { "type": "image_picker", "id": "fallback_image", "label": "Fallback image", "info": "Shown if video doesn't load." },
+    { "type": "color", "id": "overlay_color", "label": "Overlay color", "default": "#000000" },
+    { "type": "range", "id": "overlay_opacity", "min": 0, "max": 100, "step": 5, "unit": "%", "label": "Overlay opacity", "default": 0 },
+
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "section_height", "min": 0, "max": 900, "step": 50, "unit": "px", "label": "Section height (desktop)", "default": 600 },
+    { "type": "range", "id": "section_height_mobile", "min": 0, "max": 900, "step": 50, "unit": "px", "label": "Section height (mobile)", "default": 500 },
+    {
+      "type": "select",
+      "id": "text_alignment",
+      "label": "Text alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    { "type": "range", "id": "headline_size_desktop", "min": 32, "max": 120, "step": 4, "unit": "px", "label": "Headline size desktop", "default": 80 },
+    { "type": "range", "id": "headline_size_mobile", "min": 24, "max": 60, "step": 2, "unit": "px", "label": "Headline size mobile", "default": 48 },
+    { "type": "range", "id": "button_border_radius", "min": 0, "max": 50, "step": 2, "unit": "px", "label": "Button border radius", "default": 50 },
+    { "type": "range", "id": "button_spacing_scale", "min": 0.5, "max": 2.0, "step": 0.1, "label": "Button spacing scale", "default": 1 },
+
+    { "type": "header", "content": "Headline (multiline only)" },
+    { "type": "textarea", "id": "headline_multiline", "label": "Headline", "default": "Peak Security\nPeak Style\nStylish Smart Locks" },
+    { "type": "color", "id": "headline_color", "label": "Headline color", "default": "#FFFFFF" },
+
+    { "type": "header", "content": "Primary Buttons (White Style)" },
+    { "type": "text", "id": "primary_solid_text", "label": "First Button Text", "default": "Browse Products" },
+    { "type": "url", "id": "primary_solid_url", "label": "First Button URL" },
+    { "type": "text", "id": "primary_outline_text", "label": "Second Button Text", "default": "Choose a Smart Lock" },
+    { "type": "url", "id": "primary_outline_url", "label": "Second Button URL" },
+    { "type": "color", "id": "primary_button_bg", "label": "Primary Button Background", "default": "#ffffff" },
+    { "type": "color", "id": "primary_button_text", "label": "Primary Button Text Color", "default": "#000000" },
+    { "type": "color", "id": "primary_button_border", "label": "Primary Button Border", "default": "#ffffff" },
+    { "type": "color", "id": "primary_button_hover", "label": "Primary Button Hover Background", "default": "#f8f8f8" },
+
+    { "type": "header", "content": "Secondary Buttons (Glass Style)" },
+    { "type": "text", "id": "secondary_text_1", "label": "Third Button Text", "default": "Check My Door" },
+    { "type": "url", "id": "secondary_url_1", "label": "Third Button URL" },
+    { "type": "text", "id": "secondary_text_2", "label": "Fourth Button Text (Download)", "default": "Download Catalog" },
+    { "type": "url", "id": "secondary_file_2", "label": "File to download (URL)", "info": "Upload your file in Content → Files, copy the link, and paste it here." },
+    { "type": "text", "id": "secondary_download_filename", "label": "Download file name (optional)", "info": "Leave blank to use the file's original name.", "default": "Catalog" },
+    { "type": "text", "id": "secondary_text_3", "label": "Fifth Button Text", "default": "Contact Us" },
+    { "type": "url", "id": "secondary_url_3", "label": "Fifth Button URL" },
+    { "type": "color", "id": "secondary_text", "label": "Secondary Button Text Color", "default": "#ffffff" }
+  ],
+  "presets": [
+    { "name": "AI Video Hero" }
+  ]
+}
+{% endschema %}

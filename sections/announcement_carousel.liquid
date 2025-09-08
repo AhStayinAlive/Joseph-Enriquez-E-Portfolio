@@ -1,0 +1,497 @@
+{% comment %}
+  Announcements Carousel — multi-block, autoplay, clients-style dots
+  - 6 default blocks (each has Enable)
+  - No typography settings (fixed sizes); eyebrow is larger on desktop
+  - Only CTA is clickable
+{% endcomment %}
+
+{% assign sid = section.id | replace: '_','' | downcase %}
+
+{% style %}
+  .annc-{{ sid }}{
+    --bg1: {{ section.settings.background_color_start }};
+    --bg2: {{ section.settings.background_color_end }};
+    --hairline: rgba(0,0,0, {{ section.settings.border_opacity | divided_by: 100.0 }});
+    --maxw: {{ section.settings.max_width }}px;
+
+    --pt-m: {{ section.settings.mobile_padding }}px;
+    --pb-m: {{ section.settings.mobile_padding }}px;
+    --pt-d: {{ section.settings.desktop_padding }}px;
+    --pb-d: {{ section.settings.desktop_padding }}px;
+
+    --gap-m: 16px;
+    --gap-d: 40px;
+    --content-gap: 14px;
+
+    --color-eyebrow: {{ section.settings.eyebrow_color }};
+    --color-headline: {{ section.settings.headline_color }};
+    --color-subtext: {{ section.settings.subtext_color }};
+    --color-btn-text: {{ section.settings.button_text_color }};
+
+    /* liquid-glass CTA tokens */
+    --lg-blur: 18px; --lg-saturate: 180%;
+    --lg-border: hsla(0,0%,100%,.22);
+    --lg-shadow: rgba(0,0,0,.25);
+
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    border-bottom: 1px solid var(--hairline);
+    padding: var(--pt-m) 16px var(--pb-m);
+    position: relative; overflow: hidden; width:100%;
+  }
+  @media (min-width:768px){ .annc-{{ sid }}{ padding: var(--pt-d) 24px var(--pb-d); } }
+  .annc__inner-{{ sid }}{ max-width: var(--maxw); margin:0 auto; }
+
+  /* track */
+  .annc__track-wrap-{{ sid }}{ position:relative; overflow:hidden; }
+  .annc__track-{{ sid }}{
+    display:flex; align-items:stretch;
+    gap: var(--gap-m);
+    will-change: transform; transition: transform .6s cubic-bezier(.16,1,.3,1);
+  }
+  @media (min-width:768px){ .annc__track-{{ sid }}{ gap: var(--gap-d); } }
+
+  /* slide */
+  .annc__slide-{{ sid }}{
+    flex: 0 0 100%;
+    min-width: 100%;
+    display:flex; align-items:center; justify-content:space-between;
+    gap: var(--gap-m);
+  }
+  @media (min-width:768px){ .annc__slide-{{ sid }}{ gap: var(--gap-d); } }
+
+  /* content */
+  .annc__content-{{ sid }}{
+    flex:1; display:flex; flex-direction:column; gap: var(--content-gap);
+    text-align:left; align-items:flex-start; max-width:60%;
+  }
+
+  /* Eyebrow: slightly bigger on desktop */
+  .annc__eyebrow-{{ sid }}{
+    color: var(--color-eyebrow); font-weight:500; letter-spacing:.02em; margin:0; opacity:.85;
+    font-size: 14px;
+  }
+  @media (min-width:768px){
+    .annc__eyebrow-{{ sid }}{ font-size: 18px; }
+  }
+
+  /* Headline & subtext fixed sizes */
+  .annc__headline-{{ sid }}{
+    color: var(--color-headline); font-weight:700; letter-spacing:-.02em; line-height:1.2; margin:0;
+    font-size: 24px;   /* mobile */
+  }
+  @media (min-width:768px){
+    .annc__headline-{{ sid }}{ font-size: 36px; } /* desktop */
+  }
+  .annc__subtext-{{ sid }}{
+    color: var(--color-subtext); line-height:1.45; margin:0; max-width:640px;
+    font-size: 15px;
+  }
+
+  /* CTA base (kept for spacing; glass classes will override visuals) */
+  .annc__cta-{{ sid }}{
+    font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif;
+    font-weight:600; letter-spacing:-.01em; line-height:1; font-size:14px;
+    color: var(--color-btn-text); text-decoration:none;
+    display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;
+    min-height:44px; padding:14px 32px; border-radius:50px; cursor:pointer;
+    border:1px solid var(--lg-border);
+    background: linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,.18));
+    backdrop-filter: saturate(var(--lg-saturate)) blur(var(--lg-blur));
+    -webkit-backdrop-filter: saturate(var(--lg-saturate)) blur(var(--lg-blur));
+    box-shadow: 0 6px 18px var(--lg-shadow), inset 0 1px 0 rgba(255,255,255,.12);
+    transition: transform .2s, box-shadow .2s, background .2s;
+  }
+  .annc__cta-{{ sid }}:hover{ transform: translateY(-1px); background: linear-gradient(0deg, rgba(255,255,255,.24), rgba(255,255,255,.24)); box-shadow: 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.14); }
+  .annc__cta-{{ sid }}:active{ transform:none; box-shadow: 0 4px 12px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.10); }
+  .annc__cta-{{ sid }}[aria-disabled="true"]{ pointer-events:none; opacity:.55; filter:grayscale(.2); }
+
+  /* media */
+  .annc__media-wrap-{{ sid }}{ width:100%; max-width:300px; }
+  .annc__media-{{ sid }}{ width:100%; height:auto; object-fit:contain; filter: drop-shadow(0 6px 24px rgba(0,0,0,.15)); }
+  @media (min-width:768px){ .annc__media-wrap-{{ sid }}{ max-width:400px; } }
+
+  /* dots (clients style) */
+  .ai-clients-carousel__pagination-{{ sid }}{ display:flex; justify-content:center; gap:8px; margin-top:28px; }
+  .ai-clients-carousel__dot-{{ sid }}{
+    width:18px; height:6px; border-radius:9999px; border:none; cursor:pointer; padding:0; outline:none;
+    background: color-mix(in srgb, var(--color-headline) 22%, transparent);
+    transition: width .25s ease, transform .25s ease, background .2s ease;
+  }
+  .ai-clients-carousel__dot-{{ sid }}:hover{ background: color-mix(in srgb, var(--color-headline) 45%, transparent); }
+  .ai-clients-carousel__dot-{{ sid }}.active{ width:28px; background: var(--color-headline); }
+
+  .annc__empty-{{ sid }}{ text-align:center; padding:80px 20px; color: color-mix(in srgb, var(--color-subtext) 70%, transparent); }
+
+  /* --- Mobile polish: stacked card layout --- */
+  @media (max-width: 767px) {
+    .annc__track-{{ sid }}{ gap: 12px; }
+    .annc__slide-{{ sid }}{
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 320px;
+      padding: 18px 16px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 6px 24px rgba(0,0,0,.30);
+      overflow: hidden;
+    }
+    .annc__content-{{ sid }}{ align-items:center; text-align:center; max-width:none; width:100%; }
+    .annc__headline-{{ sid }}{ line-height:1.15; }
+    .annc__subtext-{{ sid }}{ max-width: 38ch; }
+    .annc__cta-{{ sid }}{ padding-left:22px; padding-right:22px; margin-top:4px; }
+    .annc__media-wrap-{{ sid }}{ order:2; max-width: min(80vw, 380px); margin-top:10px; }
+    .annc__media-{{ sid }}{ max-height: 44vh; }
+    .ai-clients-carousel__pagination-{{ sid }}{ margin-top: 18px; }
+  }
+  @media (max-width: 360px){
+    .annc__slide-{{ sid }}{ padding: 14px 12px; border-radius: 14px; }
+  }
+
+  /* ============================
+     Apple Liquid Glass Button
+     ============================ */
+
+  :root{
+    --lg-btn-radius: 28px;
+    --lg-btn-py: 14px;
+    --lg-btn-px: 32px;
+  }
+
+  /* Base */
+  .lg-btn{
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: var(--lg-btn-py) var(--lg-btn-px);
+    border: none;                      /* borderless */
+    border-radius: var(--lg-btn-radius);
+    font: 600 14px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text","SF Pro Display", system-ui, sans-serif;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    isolation: isolate;                /* prevent stacking issues */
+    overflow: hidden;                  /* keep inner glow contained */
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    transition: all .2s ease, transform .2s ease;
+    transform: translateZ(0);
+    will-change: transform, box-shadow, background;
+  }
+
+  /* Common glass lighting */
+  .lg-btn{
+    box-shadow:
+      0 10px 28px rgba(0,0,0,.25),                 /* outer shadow */
+      0 0 0 0.5px rgba(255,255,255,.14) inset,     /* hairline edge (not a border) */
+      0 1px 0 rgba(255,255,255,.18) inset,         /* inner top highlight */
+      0 -2px 6px rgba(0,0,0,.35) inset;            /* inner bottom shade */
+  }
+
+  /* DARK */
+  .lg-btn--dark{
+    color: var(--lg-btn-color, #ffffff);
+    text-shadow: 0 1px 2px rgba(0,0,0,.8);
+    background:
+      linear-gradient(135deg, rgba(60,60,60,.70) 0%, rgba(40,40,40,.85) 50%, rgba(30,30,30,.90) 100%),
+      rgba(35,35,35,.80);
+    box-shadow:
+      0 12px 32px rgba(0,0,0,.32),
+      0 0 0 0.5px rgba(255,255,255,.16) inset,
+      0 1px 0 rgba(255,255,255,.22) inset,
+      0 -2px 8px rgba(0,0,0,.45) inset;
+  }
+  .lg-btn--dark:hover{
+    transform: translateY(-1px);
+    background:
+      linear-gradient(135deg, rgba(80,80,80,.72) 0%, rgba(55,55,55,.88) 50%, rgba(40,40,40,.92) 100%),
+      rgba(45,45,45,.82);
+    box-shadow:
+      0 16px 36px rgba(0,0,0,.36),
+      0 0 0 0.5px rgba(255,255,255,.18) inset,
+      0 1px 0 rgba(255,255,255,.24) inset,
+      0 -2px 10px rgba(0,0,0,.48) inset;
+  }
+  .lg-btn--dark:active{
+    transform: translateY(0);
+    background:
+      linear-gradient(135deg, rgba(55,55,55,.70) 0%, rgba(38,38,38,.86) 50%, rgba(28,28,28,.90) 100%),
+      rgba(32,32,32,.82);
+    box-shadow:
+      0 8px 22px rgba(0,0,0,.30),
+      0 0 0 0.5px rgba(255,255,255,.14) inset,
+      0 1px 0 rgba(255,255,255,.16) inset,
+      0 -1px 6px rgba(0,0,0,.50) inset;
+  }
+
+  /* LIGHT */
+  .lg-btn--light{
+    color: var(--lg-btn-color, #333333);
+    text-shadow: 0 1px 2px rgba(255,255,255,.8);
+    background:
+      linear-gradient(135deg, rgba(180,180,180,.70) 0%, rgba(160,160,160,.85) 50%, rgba(140,140,140,.90) 100%),
+      rgba(155,155,155,.80);
+    box-shadow:
+      0 12px 28px rgba(0,0,0,.18),
+      0 0 0 0.5px rgba(255,255,255,.30) inset,
+      0 1px 0 rgba(255,255,255,.45) inset,
+      0 -2px 8px rgba(0,0,0,.20) inset;
+  }
+  .lg-btn--light:hover{
+    transform: translateY(-1px);
+    background:
+      linear-gradient(135deg, rgba(195,195,195,.72) 0%, rgba(175,175,175,.88) 50%, rgba(155,155,155,.92) 100%),
+      rgba(168,168,168,.82);
+    box-shadow:
+      0 16px 34px rgba(0,0,0,.22),
+      0 0 0 0.5px rgba(255,255,255,.34) inset,
+      0 1px 0 rgba(255,255,255,.50) inset,
+      0 -2px 10px rgba(0,0,0,.22) inset;
+  }
+  .lg-btn--light:active{
+    transform: translateY(0);
+    background:
+      linear-gradient(135deg, rgba(175,175,175,.70) 0%, rgba(158,158,158,.86) 50%, rgba(138,138,138,.90) 100%),
+      rgba(150,150,150,.82);
+    box-shadow:
+      0 8px 20px rgba(0,0,0,.18),
+      0 0 0 0.5px rgba(255,255,255,.28) inset,
+      0 1px 0 rgba(255,255,255,.40) inset,
+      0 -1px 6px rgba(0,0,0,.24) inset;
+  }
+
+  /* Accessibility + States */
+  .lg-btn:focus-visible{
+    outline: none;
+    box-shadow:
+      0 0 0 3px rgba(120,180,255,.45),
+      0 10px 28px rgba(0,0,0,.25),
+      0 0 0 0.5px rgba(255,255,255,.18) inset,
+      0 1px 0 rgba(255,255,255,.20) inset,
+      0 -2px 6px rgba(0,0,0,.30) inset;
+  }
+  .lg-btn[disabled],
+  .lg-btn[aria-disabled="true"]{
+    opacity: .55;
+    pointer-events: none;
+    filter: grayscale(.15);
+  }
+
+  /* Make button text follow Theme Editor setting in this section */
+  .annc-{{ sid }} .annc__cta-{{ sid }}.lg-btn{
+    color: var(--color-btn-text);
+  }
+
+  /* Section-scoped color var for variants */
+  .annc-{{ sid }}{ --lg-btn-color: var(--color-btn-text); }
+
+  /* Keep announcement CTAs full-bright even when disabled (override the dims) */
+  .annc-{{ sid }} .annc__cta-{{ sid }}[disabled],
+  .annc-{{ sid }} .annc__cta-{{ sid }}[aria-disabled="true"],
+  .annc-{{ sid }} .lg-btn[disabled],
+  .annc-{{ sid }} .lg-btn[aria-disabled="true"]{
+    opacity: 1;
+    filter: none;
+    cursor: default;
+  }
+{% endstyle %}
+
+<section
+  id="annc-{{ sid }}"
+  class="annc-{{ sid }}"
+  role="region"
+  aria-label="Announcements carousel"
+  data-auto-play="{{ section.settings.enable_autoplay }}"
+  data-auto-play-speed="{{ section.settings.autoplay_speed | default: 5000 }}"
+>
+  <div class="annc__inner-{{ sid }}">
+    {% assign has_enabled = false %}
+    {% for block in section.blocks %}
+      {% if block.type == 'announcement' and block.settings.enabled %}
+        {% assign has_enabled = true %}
+      {% endif %}
+    {% endfor %}
+
+    {% if has_enabled %}
+      <div class="annc__track-wrap-{{ sid }}">
+        <div class="annc__track-{{ sid }}" aria-live="polite">
+          {% for block in section.blocks %}
+            {% if block.settings.enabled %}
+              {% assign eyebrow = block.settings.eyebrow_text %}
+              {% assign headline = block.settings.headline %}
+              {% assign subtext = block.settings.subtext %}
+              {% assign btn_text = block.settings.button_text %}
+              {% assign btn_link = block.settings.button_link %}
+              {% assign image = block.settings.product_image %}
+
+              <div class="annc__slide-{{ sid }}" aria-label="{{ headline | default: 'Announcement' | escape }}" {{ block.shopify_attributes }}>
+                <div class="annc__content-{{ sid }}">
+                  {% if eyebrow != blank %}<p class="annc__eyebrow-{{ sid }}">{{ eyebrow }}</p>{% endif %}
+                  {% if headline != blank %}<h2 class="annc__headline-{{ sid }}">{{ headline }}</h2>{% endif %}
+                  {% if subtext != blank %}<p class="annc__subtext-{{ sid }}">{{ subtext }}</p>{% endif %}
+
+                  {% if btn_text != blank %}
+                    {% if btn_link != blank %}
+                      <a class="annc__cta-{{ sid }} lg-btn lg-btn--dark" href="{{ btn_link }}">{{ btn_text }}</a>
+                    {% else %}
+                      <button
+                        class="annc__cta-{{ sid }} lg-btn lg-btn--dark"
+                        type="button"
+                        disabled
+                        aria-disabled="true">
+                        {{ btn_text }}
+                      </button>
+                    {% endif %}
+                  {% endif %}
+                </div>
+
+                <div class="annc__media-wrap-{{ sid }}">
+                  {% if image %}
+                    <img class="annc__media-{{ sid }}" src="{{ image | image_url: width: 900 }}" alt="{{ image.alt | default: headline | escape }}" loading="lazy" width="{{ image.width }}" height="{{ image.height }}">
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="ai-clients-carousel__pagination-{{ sid }}" role="tablist" aria-label="Announcements pagination"></div>
+      </div>
+    {% else %}
+      <div class="annc__empty-{{ sid }}">Add or enable announcement blocks in the Theme Editor.</div>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+(function(){
+  const root  = document.getElementById('annc-{{ sid }}');
+  if(!root) return;
+  const track = root.querySelector('.annc__track-{{ sid }}');
+  const slides = Array.from(root.querySelectorAll('.annc__slide-{{ sid }}'));
+  const dotsWrap = root.querySelector('.ai-clients-carousel__pagination-{{ sid }}');
+  if(!track || slides.length === 0 || !dotsWrap) return;
+
+  let index = 0, timer = null;
+  const speed = Math.max(1500, parseInt(root.dataset.autoPlaySpeed) || 5000);
+  const auto  = (root.dataset.autoPlay === 'true' || root.dataset.autoPlay === '1');
+
+  // Build dots (clients style)
+  dotsWrap.innerHTML = '';
+  const dots = slides.map((_, i) => {
+    const b = document.createElement('button');
+    b.className = 'ai-clients-carousel__dot-{{ sid }}' + (i===0 ? ' active' : '');
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-label','Go to slide ' + (i+1));
+    b.setAttribute('aria-selected', i===0 ? 'true' : 'false');
+    b.addEventListener('click', () => go(i));
+    dotsWrap.appendChild(b);
+    return b;
+  });
+
+  function offsetFor(i){
+    const firstLeft = slides[0].offsetLeft;
+    return (slides[i].offsetLeft - firstLeft);
+  }
+  function go(i){
+    const total = slides.length;
+    index = ((i % total) + total) % total;
+    track.style.transform = `translateX(-${offsetFor(index)}px)`;
+    dots.forEach((d, idx) => {
+      const active = idx === index;
+      d.classList.toggle('active', active);
+      d.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+  function next(){ go(index + 1); }
+  function start(){ if(!auto) return; stop(); timer = setInterval(next, speed); }
+  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+
+  // Pause on hover
+  const wrap = root.querySelector('.annc__track-wrap-{{ sid }}');
+  wrap.addEventListener('mouseenter', stop, {passive:true});
+  wrap.addEventListener('mouseleave', start, {passive:true});
+
+  // Keyboard
+  root.setAttribute('tabindex','0');
+  root.addEventListener('keydown', e => {
+    if(e.key === 'ArrowRight'){ e.preventDefault(); next(); }
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); go(index - 1); }
+  });
+
+  // Touch swipe
+  let sx=0,cx=0,drag=false,t0=0;
+  wrap.addEventListener('touchstart', e => { sx=e.touches[0].clientX; cx=sx; drag=true; t0=Date.now(); stop(); }, {passive:true});
+  wrap.addEventListener('touchmove',  e => { if(drag) cx=e.touches[0].clientX; }, {passive:true});
+  wrap.addEventListener('touchend',   () => {
+    if(!drag) return; drag=false;
+    const dx=sx-cx, dt=Date.now()-t0, fast=Math.abs(dx)/Math.max(dt,1)>0.5;
+    if(Math.abs(dx)>50 || fast){ dx>0 ? next() : go(index - 1); }
+    start();
+  }, {passive:true});
+
+  // Realign on resize
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt=setTimeout(()=> go(index), 150); });
+
+  // Init
+  requestAnimationFrame(()=>{ go(0); start(); });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Announcements Carousel",
+  "settings": [
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "max_width", "min": 960, "max": 1600, "step": 20, "label": "Max width", "default": 1300 },
+    { "type": "range", "id": "desktop_padding", "min": 16, "max": 64, "step": 2, "label": "Desktop padding (Y)", "default": 32 },
+    { "type": "range", "id": "mobile_padding", "min": 12, "max": 40, "step": 2, "label": "Mobile padding (Y)", "default": 20 },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "background_color_start", "label": "Background start", "default": "#0b0f16" },
+    { "type": "color", "id": "background_color_end", "label": "Background end", "default": "#0f1622" },
+    { "type": "range", "id": "border_opacity", "min": 0, "max": 20, "step": 1, "label": "Bottom hairline opacity", "default": 8 },
+    { "type": "color", "id": "eyebrow_color", "label": "Eyebrow color", "default": "#9aa3af" },
+    { "type": "color", "id": "headline_color", "label": "Headline color", "default": "#ffffff" },
+    { "type": "color", "id": "subtext_color", "label": "Subtext color", "default": "#cbd5e1" },
+    { "type": "color", "id": "button_text_color", "label": "Button text color", "default": "#ffffff" },
+
+    { "type": "header", "content": "Animation" },
+    { "type": "checkbox", "id": "enable_autoplay", "label": "Enable autoplay", "default": true },
+    { "type": "range", "id": "autoplay_speed", "min": 1500, "max": 9000, "step": 250, "label": "Autoplay speed (ms)", "default": 5000 }
+  ],
+  "blocks": [
+    {
+      "type": "announcement",
+      "name": "Announcement",
+      "settings": [
+        { "type": "checkbox", "id": "enabled", "label": "Enable", "default": true },
+        { "type": "text", "id": "eyebrow_text", "label": "Eyebrow", "default": "New • Just dropped" },
+        { "type": "text", "id": "headline", "label": "Headline", "default": "Broen Obsidian has dropped." },
+        { "type": "textarea", "id": "subtext", "label": "Subtext", "default": "Premium build, instant setup, and Apple-grade polish." },
+        { "type": "text", "id": "button_text", "label": "Button text", "default": "Shop now" },
+        { "type": "url", "id": "button_link", "label": "Button link" },
+        { "type": "image_picker", "id": "product_image", "label": "Product image" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Announcements Carousel",
+      "blocks": [
+        { "type": "announcement", "settings": { "enabled": true,  "eyebrow_text":"New • Just dropped", "headline":"Broen Obsidian has dropped.", "subtext":"Premium build, instant setup, and Apple-grade polish.", "button_text":"Shop now" } },
+        { "type": "announcement", "settings": { "enabled": true,  "eyebrow_text":"Update • This week",   "headline":"Free installation in Metro Manila", "subtext":"Enjoy professional setup with every Broen lock.", "button_text":"Book install" } },
+        { "type": "announcement", "settings": { "enabled": true,  "eyebrow_text":"Promo",               "headline":"Bundle & save 10%", "subtext":"Bundle main door + bedroom lock. Limited time.", "button_text":"See bundles" } },
+        { "type": "announcement", "settings": { "enabled": true,  "eyebrow_text":"News",                "headline":"Now supports Apple Home Keys*", "subtext":"Seamless iPhone/Watch unlock. *For compatible models.", "button_text":"Learn more" } },
+        { "type": "announcement", "settings": { "enabled": true,  "eyebrow_text":"Warranty",            "headline":"2-Year limited warranty", "subtext":"Hassle-free support and parts replacement.", "button_text":"Coverage" } },
+        { "type": "announcement", "settings": { "enabled": true,  "eyebrow_text":"After-Sales",         "headline":"24/7 concierge support", "subtext":"Chat with our team any time for help.", "button_text":"Contact us" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

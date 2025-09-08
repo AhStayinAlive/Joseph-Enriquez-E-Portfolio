@@ -1,0 +1,479 @@
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+{% assign current_host = request.host | default: shop.primary_domain.host %}
+
+{% style %}
+  join-team-{{ ai_gen_id }}{display:block;isolation:isolate}
+
+  /* Root: same font + rendering as Collections */
+  .jt-{{ ai_gen_id }}{
+    background: {{ block.settings.section_bg }};
+    color: {{ block.settings.text_color }};
+    padding: {{ block.settings.pt }}px 16px {{ block.settings.pb }}px;
+
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    letter-spacing:-.01em;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+  }
+  .jt__inner-{{ ai_gen_id }}{max-width:1100px;margin:0 auto}
+
+  /* Header: big, Apple-y, with soft glow under */
+  .jt__heading-{{ ai_gen_id }}{
+    margin:0 0 {{ block.settings.h_mb }}px;
+    text-align:center;
+    font:700 {{ block.settings.h_size }}px/1.1 -apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;
+    letter-spacing:-.03em;
+    color:{{ block.settings.h_color }};
+    position:relative;
+  }
+  .jt__heading-{{ ai_gen_id }}::after{
+    content:"";position:absolute;left:50%;transform:translateX(-50%);
+    bottom:-22px;width:150px;height:12px;border-radius:9999px;
+    background:radial-gradient(50% 100% at 50% 50%,rgba(255,255,255,.45),rgba(255,255,255,0) 70%);
+    filter:blur(6px);opacity:.6
+  }
+
+  /* Card */
+  .jt-card-{{ ai_gen_id }}{
+    background: {{ block.settings.card_bg }};
+    border:1px solid {{ block.settings.card_border }};
+    border-radius:14px;
+    padding:16px;
+    margin:0 auto {{ block.settings.card_gap }}px;
+    max-width:860px;
+    box-shadow:0 10px 28px rgba(0,0,0,.22)
+  }
+  .jt-card__title-{{ ai_gen_id }}{
+    text-align:center;
+    font:600 13px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    opacity:.9;margin:4px 0 12px;letter-spacing:.06em
+  }
+
+  /* Grid: Photo | Labels | Buttons */
+  .jt-grid-{{ ai_gen_id }}{
+    display:grid;
+    grid-template-columns: {{ block.settings.img_size }}px {{ block.settings.label_w }}px {{ block.settings.btn_col_w }}px;
+    gap:14px 16px;align-items:start;justify-content:center
+  }
+
+  .jt-photo-{{ ai_gen_id }}{
+    width:{{ block.settings.img_size }}px;height:{{ block.settings.img_size }}px;
+    border-radius:14px;overflow:hidden;background:#0f0f10;border:1px solid {{ block.settings.card_border }};
+    box-shadow:0 8px 24px rgba(0,0,0,.28)
+  }
+  .jt-photo-{{ ai_gen_id }} img{width:100%;height:100%;object-fit:cover;display:block}
+
+  /* Rows & labels – SF Pro Text */
+  .jt-rows-{{ ai_gen_id }}{display:grid;grid-template-rows:38px repeat(5,36px) 48px;gap:8px}
+  .jt-labels-{{ ai_gen_id }}{text-align:right;padding-top:2px}
+  .jt-label-{{ ai_gen_id }}{
+    font:500 13px/1.25 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    opacity:.65;white-space:nowrap;display:flex;align-items:center;justify-content:flex-end
+  }
+
+  .jt-actions-{{ ai_gen_id }}{width:100%}
+
+  /* ======================================================
+     HARD-CODED LIQUID GLASS BUTTONS (not theme-editable)
+     Typography matches Collections buttons
+     ====================================================== */
+  .jt-btn-{{ ai_gen_id }}{
+    width:100%;justify-content:center;min-height:42px;
+    padding:10px 14px;border-radius:12px;
+    font:600 13.5px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif;
+    letter-spacing:-.01em;
+    text-decoration:none;display:inline-flex;align-items:center;gap:.5ch;
+    user-select:none;transition:transform .2s,box-shadow .2s,background .2s,filter .2s
+  }
+
+  /* Name chip: subtle outline glass */
+  .jt-name-{{ ai_gen_id }}{
+    background:transparent;border:1px solid rgba(255,255,255,.14);
+    color:{{ block.settings.text_color }};
+    backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px)
+  }
+
+  /* Social chips: dark liquid glass (same recipe as Collections) */
+  .jt-chip-{{ ai_gen_id }}{
+    color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);border:none;
+    backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+    background:
+      linear-gradient(135deg,rgba(60,60,60,.7) 0%,rgba(40,40,40,.85) 50%,rgba(30,30,30,.9) 100%),
+      rgba(35,35,35,.8);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      inset 0 -1px 0 rgba(0,0,0,.30),
+      0 4px 12px rgba(0,0,0,.40),
+      0 8px 24px rgba(0,0,0,.20)
+  }
+  .jt-chip-{{ ai_gen_id }}:hover{
+    transform:translateY(-1px);
+    background:
+      linear-gradient(135deg,rgba(70,70,70,.75) 0%,rgba(50,50,50,.9) 50%,rgba(35,35,35,.95) 100%),
+      rgba(40,40,40,.85);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.12),
+      inset 0 -1px 0 rgba(0,0,0,.25),
+      0 6px 16px rgba(0,0,0,.50),
+      0 12px 30px rgba(0,0,0,.30)
+  }
+  .jt-chip-{{ ai_gen_id }}:active{transform:translateY(0)}
+
+  /* CTA: light glass variant */
+  .jt-cta-{{ ai_gen_id }}{
+    color:#000;text-shadow:none;border:1px solid rgba(255,255,255,.55);
+    backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+    background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(245,245,245,.90));
+    box-shadow:0 10px 24px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.55);
+    min-height:46px;font-weight:700;border-radius:16px
+  }
+  .jt-cta-{{ ai_gen_id }}:hover{
+    transform:translateY(-1px);
+    background:linear-gradient(180deg,rgba(255,255,255,1),rgba(245,245,245,.95))
+  }
+
+  /* Mobile trims */
+  @media (max-width:768px){
+    .jt-{{ ai_gen_id }}{padding:{{ block.settings.pt | times: 0.7 | round }}px 12px {{ block.settings.pb | times: 0.7 | round }}px}
+    .jt__heading-{{ ai_gen_id }}{
+      font-size:{{ block.settings.h_size | times: 0.92 | round }}px;
+      margin-bottom:{{ block.settings.h_mb | times: 0.7 | round }}px
+    }
+    .jt-card-{{ ai_gen_id }}{max-width:96%;padding:14px}
+    .jt-grid-{{ ai_gen_id }}{grid-template-columns:1fr;justify-items:center}
+    .jt-labels-{{ ai_gen_id }}{display:none}
+    .jt-actions-{{ ai_gen_id }}{width:100%}
+    .jt-photo-{{ ai_gen_id }}{width:{{ block.settings.img_size }}px;height:{{ block.settings.img_size }}px}
+    .jt-rows-{{ ai_gen_id }}{grid-template-rows:repeat(7,auto);gap:10px}
+    .jt-btn-{{ ai_gen_id }}{min-height:44px}
+  }
+{% endstyle %}
+
+
+
+<join-team-{{ ai_gen_id }} class="jt-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="jt__inner-{{ ai_gen_id }}">
+    <h2 class="jt__heading-{{ ai_gen_id }}">{{ block.settings.main_title }}</h2>
+
+    <!-- Specialist -->
+    <section class="jt-card-{{ ai_gen_id }}">
+      <div class="jt-card__title-{{ ai_gen_id }}">{{ block.settings.specialist_title }}</div>
+      <div class="jt-grid-{{ ai_gen_id }}">
+        <div class="jt-photo-{{ ai_gen_id }}">
+          {% if block.settings.specialist_image %}
+            <img src="{{ block.settings.specialist_image | image_url: width: 900 }}" alt="{{ block.settings.specialist_name | escape }}">
+          {% else %}
+            {{ 'image' | placeholder_svg_tag }}
+          {% endif %}
+        </div>
+
+        <div class="jt-labels-{{ ai_gen_id }} jt-rows-{{ ai_gen_id }}">
+          <div class="jt-label-{{ ai_gen_id }}">Name</div>
+          <div class="jt-label-{{ ai_gen_id }}">Viber</div>
+          <div class="jt-label-{{ ai_gen_id }}">Facebook</div>
+          <div class="jt-label-{{ ai_gen_id }}">Instagram</div>
+          <div class="jt-label-{{ ai_gen_id }}">WhatsApp</div>
+          <div class="jt-label-{{ ai_gen_id }}">Email</div>
+          <div></div>
+        </div>
+
+        <div class="jt-actions-{{ ai_gen_id }} jt-rows-{{ ai_gen_id }}">
+          <div class="jt-btn-{{ ai_gen_id }} jt-name-{{ ai_gen_id }}">{{ block.settings.specialist_name }}</div>
+
+          {%- liquid
+            assign _link = block.settings.specialist_viber_link
+            assign _ext = false
+            if _link != blank
+              assign _ll = _link | downcase
+              assign _p7 = _ll | slice: 0, 7
+              assign _p8 = _ll | slice: 0, 8
+              assign _is_http = false
+              if _p7 == 'http://' or _p8 == 'https://'
+                assign _is_http = true
+              endif
+              if _is_http
+                unless _ll contains current_host
+                  assign _ext = true
+                endunless
+              endif
+            endif
+          -%}
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark"
+             href="{{ _link }}"{% if _ext %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.settings.viber_button_text }}
+          </a>
+
+          {%- liquid
+            assign _link = block.settings.specialist_facebook_link
+            assign _ext = false
+            if _link != blank
+              assign _ll = _link | downcase
+              assign _p7 = _ll | slice: 0, 7
+              assign _p8 = _ll | slice: 0, 8
+              assign _is_http = false
+              if _p7 == 'http://' or _p8 == 'https://'
+                assign _is_http = true
+              endif
+              if _is_http
+                unless _ll contains current_host
+                  assign _ext = true
+                endunless
+              endif
+            endif
+          -%}
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark"
+             href="{{ _link }}"{% if _ext %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.settings.facebook_button_text }}
+          </a>
+
+          {%- liquid
+            assign _link = block.settings.specialist_instagram_link
+            assign _ext = false
+            if _link != blank
+              assign _ll = _link | downcase
+              assign _p7 = _ll | slice: 0, 7
+              assign _p8 = _ll | slice: 0, 8
+              assign _is_http = false
+              if _p7 == 'http://' or _p8 == 'https://'
+                assign _is_http = true
+              endif
+              if _is_http
+                unless _ll contains current_host
+                  assign _ext = true
+                endunless
+              endif
+            endif
+          -%}
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark"
+             href="{{ _link }}"{% if _ext %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.settings.instagram_button_text }}
+          </a>
+
+          {%- liquid
+            assign _link = block.settings.specialist_whatsapp_link
+            assign _ext = false
+            if _link != blank
+              assign _ll = _link | downcase
+              assign _p7 = _ll | slice: 0, 7
+              assign _p8 = _ll | slice: 0, 8
+              assign _is_http = false
+              if _p7 == 'http://' or _p8 == 'https://'
+                assign _is_http = true
+              endif
+              if _is_http
+                unless _ll contains current_host
+                  assign _ext = true
+                endunless
+              endif
+            endif
+          -%}
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark"
+             href="{{ _link }}"{% if _ext %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.settings.whatsapp_button_text }}
+          </a>
+
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark" href="mailto:{{ block.settings.specialist_email }}">
+            {{ block.settings.email_button_text }}
+          </a>
+
+          <button class="jt-btn-{{ ai_gen_id }} jt-cta-{{ ai_gen_id }} lg-btn lg-btn--light"
+                  onclick="window.open('{{ block.settings.specialist_cta_link }}','{{ block.settings.cta_target }}')">
+            {{ block.settings.cta_button_text }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team -->
+    <section class="jt-card-{{ ai_gen_id }}">
+      <div class="jt-card__title-{{ ai_gen_id }}">{{ block.settings.team_title }}</div>
+      <div class="jt-grid-{{ ai_gen_id }}">
+        <div class="jt-photo-{{ ai_gen_id }}">
+          {% if block.settings.team_image %}
+            <img src="{{ block.settings.team_image | image_url: width: 900 }}" alt="{{ block.settings.team_name | escape }}">
+          {% else %}
+            {{ 'image' | placeholder_svg_tag }}
+          {% endif %}
+        </div>
+
+        <div class="jt-labels-{{ ai_gen_id }} jt-rows-{{ ai_gen_id }}">
+          <div class="jt-label-{{ ai_gen_id }}">Name</div>
+          <div class="jt-label-{{ ai_gen_id }}">Viber</div>
+          <div class="jt-label-{{ ai_gen_id }}">Facebook</div>
+          <div class="jt-label-{{ ai_gen_id }}">Instagram</div>
+          <div class="jt-label-{{ ai_gen_id }}">WhatsApp</div>
+          <div class="jt-label-{{ ai_gen_id }}">Email</div>
+          <div></div>
+        </div>
+
+        <div class="jt-actions-{{ ai_gen_id }} jt-rows-{{ ai_gen_id }}">
+          <div class="jt-btn-{{ ai_gen_id }} jt-name-{{ ai_gen_id }}">{{ block.settings.team_name }}</div>
+
+          {%- liquid
+            assign _link = block.settings.team_viber_link
+            assign _ext = false
+            if _link != blank
+              assign _ll = _link | downcase
+              assign _p7 = _ll | slice: 0, 7
+              assign _p8 = _ll | slice: 0, 8
+              assign _is_http = false
+              if _p7 == 'http://' or _p8 == 'https://'
+                assign _is_http = true
+              endif
+              if _is_http
+                unless _ll contains current_host
+                  assign _ext = true
+                endunless
+              endif
+            endif
+          -%}
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark"
+             href="{{ _link }}"{% if _ext %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.settings.viber_button_text }}
+          </a>
+
+          {%- liquid
+            assign _link = block.settings.team_facebook_link
+            assign _ext = false
+            if _link != blank
+              assign _ll = _link | downcase
+              assign _p7 = _ll | slice: 0, 7
+              assign _p8 = _ll | slice: 0, 8
+              assign _is_http = false
+              if _p7 == 'http://' or _p8 == 'https://'
+                assign _is_http = true
+              endif
+              if _is_http
+                unless _ll contains current_host
+                  assign _ext = true
+                endunless
+              endif
+            endif
+          -%}
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark"
+             href="{{ _link }}"{% if _ext %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.settings.facebook_button_text }}
+          </a>
+
+          {%- liquid
+            assign _link = block.settings.team_instagram_link
+            assign _ext = false
+            if _link != blank
+              assign _ll = _link | downcase
+              assign _p7 = _ll | slice: 0, 7
+              assign _p8 = _ll | slice: 0, 8
+              assign _is_http = false
+              if _p7 == 'http://' or _p8 == 'https://'
+                assign _is_http = true
+              endif
+              if _is_http
+                unless _ll contains current_host
+                  assign _ext = true
+                endunless
+              endif
+            endif
+          -%}
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark"
+             href="{{ _link }}"{% if _ext %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.settings.instagram_button_text }}
+          </a>
+
+          {%- liquid
+            assign _link = block.settings.team_whatsapp_link
+            assign _ext = false
+            if _link != blank
+              assign _ll = _link | downcase
+              assign _p7 = _ll | slice: 0, 7
+              assign _p8 = _ll | slice: 0, 8
+              assign _is_http = false
+              if _p7 == 'http://' or _p8 == 'https://'
+                assign _is_http = true
+              endif
+              if _is_http
+                unless _ll contains current_host
+                  assign _ext = true
+                endunless
+              endif
+            endif
+          -%}
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark"
+             href="{{ _link }}"{% if _ext %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.settings.whatsapp_button_text }}
+          </a>
+
+          <a class="jt-btn-{{ ai_gen_id }} jt-chip-{{ ai_gen_id }} lg-btn lg-btn--dark" href="mailto:{{ block.settings.team_email }}">
+            {{ block.settings.email_button_text }}
+          </a>
+
+          <button class="jt-btn-{{ ai_gen_id }} jt-cta-{{ ai_gen_id }} lg-btn lg-btn--light"
+                  onclick="window.open('{{ block.settings.team_cta_link }}','{{ block.settings.cta_target }}')">
+            {{ block.settings.cta_button_text }}
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+</join-team-{{ ai_gen_id }}>
+
+{% schema %}
+{
+  "name": "Join Team",
+  "settings": [
+    { "type": "text", "id": "main_title", "default": "Join the Team", "label": "Main title" },
+
+    { "type": "text", "id": "specialist_title", "default": "TALK TO A SPECIALIST", "label": "Specialist title" },
+    { "type": "text", "id": "team_title", "default": "TALK TO THE TEAM", "label": "Team title" },
+    { "type": "text", "id": "specialist_name", "default": "DR. SARAH JOHNSON", "label": "Specialist name" },
+    { "type": "text", "id": "team_name", "default": "SUPPORT TEAM", "label": "Team name" },
+
+    { "type": "image_picker", "id": "specialist_image", "label": "Specialist image" },
+    { "type": "image_picker", "id": "team_image", "label": "Team image" },
+
+    { "type": "url", "id": "specialist_viber_link", "label": "Specialist Viber link" },
+    { "type": "url", "id": "specialist_facebook_link", "label": "Specialist Facebook link" },
+    { "type": "url", "id": "specialist_instagram_link", "label": "Specialist Instagram link" },
+    { "type": "url", "id": "specialist_whatsapp_link", "label": "Specialist WhatsApp link" },
+    { "type": "text", "id": "specialist_email", "default": "specialist@company.com", "label": "Specialist email" },
+
+    { "type": "url", "id": "team_viber_link", "label": "Team Viber link" },
+    { "type": "url", "id": "team_facebook_link", "label": "Team Facebook link" },
+    { "type": "url", "id": "team_instagram_link", "label": "Team Instagram link" },
+    { "type": "url", "id": "team_whatsapp_link", "label": "Team WhatsApp link" },
+    { "type": "text", "id": "team_email", "default": "team@company.com", "label": "Team email" },
+
+    { "type": "text", "id": "viber_button_text", "default": "Contact us through Viber", "label": "Viber button text" },
+    { "type": "text", "id": "facebook_button_text", "default": "Contact us through Facebook", "label": "Facebook button text" },
+    { "type": "text", "id": "instagram_button_text", "default": "Contact us through Instagram", "label": "Instagram button text" },
+    { "type": "text", "id": "whatsapp_button_text", "default": "Contact us through WhatsApp", "label": "WhatsApp button text" },
+    { "type": "text", "id": "email_button_text", "default": "Contact us through Email", "label": "Email button text" },
+    { "type": "text", "id": "cta_button_text", "default": "Message/Call Now", "label": "CTA button text" },
+    { "type": "url", "id": "specialist_cta_link", "label": "Specialist CTA link" },
+    { "type": "url", "id": "team_cta_link", "label": "Team CTA link" },
+    { "type": "select", "id": "cta_target", "options":[{"value":"_self","label":"Same window"},{"value":"_blank","label":"New window"}], "default":"_blank", "label":"CTA link target" },
+
+    { "type": "header", "content": "Layout & sizes" },
+    { "type": "range", "id": "pt", "min": 12, "max": 60, "step": 4, "default": 20, "label": "Top padding" },
+    { "type": "range", "id": "pb", "min": 12, "max": 60, "step": 4, "default": 20, "label": "Bottom padding" },
+    { "type": "range", "id": "card_gap", "min": 10, "max": 36, "step": 2, "default": 16, "label": "Gap between cards" },
+
+    { "type": "range", "id": "img_size", "min": 160, "max": 220, "step": 10, "default": 190, "label": "Image size (square)" },
+    { "type": "range", "id": "label_w", "min": 80, "max": 140, "step": 10, "default": 100, "label": "Label column width" },
+    { "type": "range", "id": "btn_col_w", "min": 260, "max": 360, "step": 10, "default": 320, "label": "Button column width" },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "section_bg", "default": "#0B0B0B", "label": "Section background" },
+    { "type": "color", "id": "text_color", "default": "#FFFFFF", "label": "Base text" },
+    { "type": "color", "id": "h_color", "default": "#FFFFFF", "label": "Heading text" },
+    { "type": "color", "id": "accent", "default": "#FFFFFF", "label": "Heading underline" },
+    { "type": "color", "id": "card_bg", "default": "#0F0F10", "label": "Card background" },
+    { "type": "color", "id": "card_border", "default": "#222428", "label": "Card border" },
+
+    { "type": "header", "content": "Heading" },
+    { "type": "range", "id": "h_size", "min": 22, "max": 42, "step": 2, "default": 34, "label": "Heading size" },
+    { "type": "range", "id": "h_mb", "min": 10, "max": 40, "step": 2, "default": 22, "label": "Heading bottom margin" }
+  ],
+  "presets":[{"name":"Join Team (Glassy)"}]
+}
+{% endschema %}

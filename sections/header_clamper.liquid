@@ -1,0 +1,714 @@
+<link rel="stylesheet" href="{{ 'component-list-menu.css' | asset_url }}" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="{{ 'component-search.css' | asset_url }}" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="{{ 'component-menu-drawer.css' | asset_url }}" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="{{ 'component-cart-notification.css' | asset_url }}" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="{{ 'component-cart-items.css' | asset_url }}" media="print" onload="this.media='all'">
+{%- if settings.predictive_search_enabled -%}
+  <link rel="stylesheet" href="{{ 'component-price.css' | asset_url }}" media="print" onload="this.media='all'">
+{%- endif -%}
+
+{%- if settings.cart_type == "drawer" -%}
+  {{ 'component-cart-drawer.css' | asset_url | stylesheet_tag }}
+  {{ 'component-cart.css' | asset_url | stylesheet_tag }}
+  {{ 'component-totals.css' | asset_url | stylesheet_tag }}
+  {{ 'component-price.css' | asset_url | stylesheet_tag }}
+  {{ 'component-discounts.css' | asset_url | stylesheet_tag }}
+{%- endif -%}
+
+<style>
+  header-drawer { justify-self: start; margin-left: -1.2rem; }
+
+  {%- if section.settings.sticky_header_type == 'reduce-logo-size' -%}
+    .scrolled-past-header .header__heading-logo-wrapper { width: 75%; }
+  {%- endif -%}
+
+  /* Always hide drawer on desktop (force dropdown on desktop) */
+  @media screen and (min-width: 990px) { header-drawer { display: none; } }
+
+  .menu-drawer-container { display: flex; }
+  .list-menu { list-style: none; padding: 0; margin: 0; }
+  .list-menu--inline { display: inline-flex; flex-wrap: wrap; }
+  summary.list-menu__item { padding-right: 2.7rem; }
+
+  .list-menu__item { display: flex; align-items: center; line-height: calc(1 + 0.3 / var(--font-body-scale)); }
+  .list-menu__item--link {
+    text-decoration: none;
+    padding-bottom: 1rem; padding-top: 1rem;
+    line-height: calc(1 + 0.8 / var(--font-body-scale));
+  }
+  @media screen and (min-width: 750px) {
+    .list-menu__item--link { padding-bottom: 0.5rem; padding-top: 0.5rem; }
+  }
+
+  /* Permanent single underline; kill hover/active differences */
+  .header .list-menu__item--link,
+  .header .header__menu-item,
+  .header .list-menu > li > details > summary.list-menu__item,
+  .menu-drawer a,
+  .menu-drawer button.menu-drawer__menu-item {
+    text-decoration: underline !important;
+    text-underline-offset: 0.15em;
+    text-decoration-thickness: 1.5px;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+    text-decoration-color: currentColor !important;
+  }
+  .header .header__menu-item::after,
+  .header .header__menu-item::before,
+  .header .list-menu__item--link::after,
+  .header .list-menu__item--link::before,
+  .header__active-menu-item,
+  .header__menu-item span,
+  .list-menu__item--active {
+    box-shadow: none !important;
+    border-bottom: 0 !important;
+  }
+  .header a:hover,
+  .header a:focus,
+  .header a:active,
+  .header a:visited,
+  .menu-drawer a:hover,
+  .menu-drawer a:focus,
+  .menu-drawer a:active,
+  .menu-drawer a:visited,
+  .menu-drawer button.menu-drawer__menu-item:hover,
+  .menu-drawer button.menu-drawer__menu-item:focus {
+    color: inherit !important;
+    background: transparent !important;
+    opacity: 1 !important;
+    text-decoration: underline !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .header__icon, .menu-drawer .icon { text-decoration: none !important; }
+
+  /* Remove login/account surfaces defensively */
+  .header__icon--account { display: none !important; }
+  .header a[href="{{ routes.account_url }}"],
+  .header a[href="{{ routes.account_login_url }}"],
+  .header a[href="{{ routes.account_register_url }}"],
+  .menu-drawer a[href="{{ routes.account_url }}"],
+  .menu-drawer a[href="{{ routes.account_login_url }}"],
+  .menu-drawer a[href="{{ routes.account_register_url }}"] { display: none !important; }
+
+  /* HARD-HIDE language selector across header & drawer (keep country) */
+  #HeaderLanguageForm,
+  #DrawerLanguageForm,
+  [id*="LanguageForm"],
+  [id*="LanguageList"],
+  [aria-controls*="LanguageList"],
+  .menu-drawer [aria-controls*="LanguageList"] {
+    display: none !important;
+  }
+</style>
+
+{%- style -%}
+  .header {
+    padding: {{ section.settings.padding_top | times: 0.5 | round: 0 }}px 3rem
+             {{ section.settings.padding_bottom | times: 0.5 | round: 0 }}px 3rem;
+  }
+  .section-header {
+    position: sticky; top: 0; z-index: 100;
+    margin-bottom: {{ section.settings.margin_bottom | times: 0.75 | round: 0 }}px;
+  }
+  @media screen and (min-width: 750px) {
+    .section-header { margin-bottom: {{ section.settings.margin_bottom }}px; }
+  }
+  @media screen and (min-width: 990px) {
+    .header {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  /* Default frosted header only for NON-white pages */
+  body:not(.template-collection):not(.template-product):not(.template-cart):not(.template-checkout)
+  .header-wrapper{
+    --hdr-blur:20px; --hdr-saturate:180%;
+    --hdr-bg:hsla(0,0%,100%,.08);
+    --hdr-bg-scrolled:hsla(0,0%,100%,.12);
+    --hdr-border:hsla(0,0%,100%,.24);
+
+    background:var(--hdr-bg) !important;
+    -webkit-backdrop-filter:saturate(var(--hdr-saturate)) blur(var(--hdr-blur));
+    backdrop-filter:saturate(var(--hdr-saturate)) blur(var(--hdr-blur));
+    border-bottom:1px solid var(--hdr-border);
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+  }
+
+  body:not(.template-collection):not(.template-product):not(.template-cart):not(.template-checkout)
+  .scrolled-past-header .header-wrapper{
+    background:var(--hdr-bg-scrolled)!important;
+    border-bottom-color:hsla(0,0%,100%,.26);
+    box-shadow:0 10px 24px rgba(0,0,0,.16);
+  }
+
+  body:not(.template-collection):not(.template-product):not(.template-cart):not(.template-checkout)
+  .header-wrapper--border-bottom{ border-bottom-color: var(--hdr-border); }
+
+  /* Make the next section sit behind the header so blur has something to sample */
+  .section-header + .shopify-section{
+    position: relative; z-index: 0;
+    margin-top: calc(-1 * var(--header-height));
+    padding-top: var(--header-height);
+  }
+
+  /* Non-support fallback: cancel the overlap if blur isn't supported */
+  @supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+    .header-wrapper{
+      background:rgba(255,255,255,.88)!important;
+      -webkit-backdrop-filter:none; backdrop-filter:none;
+    }
+    .section-header + .shopify-section{ margin-top: 0; padding-top: 0; }
+  }
+{%- endstyle -%}
+
+
+<!-- Global caret/hit-area & layering patch -->
+<style>
+  .section-header .localization-form__select{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 12px; border-radius:8px;
+    min-width:max-content;
+  }
+  .section-header .localization-form__select .icon-caret{
+    position:static; right:auto; top:auto; transform:none;
+    margin-left:2px; pointer-events:none; flex-shrink:0;
+  }
+  .section-header .localization-form__select .icon-caret svg{ width:10px; height:10px; display:block; }
+  .section-header .disclosure__list-wrapper{ z-index: 1000 !important; }
+</style>
+
+{% comment %}
+  ===== WHITE HEADER PAGES =====
+{% endcomment %}
+
+{% if request.page_type == 'collection' or request.page_type == 'product' or request.page_type == 'cart' or request.page_type == 'checkout' %}
+  <style>
+    .section-header{
+      --glass-blur: 20px;
+      --glass-saturate: 180%;
+      /* Lighter alphas = more see-through */
+      --glass-bg: rgba(255,255,255,.22);
+      --glass-bg-strong: rgba(255,255,255,.30);
+      --glass-bg-scrolled: rgba(255,255,255,.36);
+      --glass-border: rgba(0,0,0,.10);
+      --glass-highlight: rgba(255,255,255,.60);
+      --glass-shadow: rgba(0,0,0,.10);
+    }
+
+    /* Nuke any solid backgrounds inside the header so frost shows through */
+    .section-header .header,
+    .section-header .header .page-width,
+    .section-header .header .header__menu,
+    .section-header .header .header__heading,
+    .section-header .header .header__icons{
+      background: transparent !important;
+      background-image: none !important;
+    }
+
+    /* Frosted, semi-transparent wrapper */
+    .section-header .header-wrapper,
+    .section-header .header-wrapper.gradient{
+      background: var(--glass-bg) !important;
+      background-image: none !important;
+      -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur)) !important;
+      backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur)) !important;
+      border-bottom: 1px solid var(--glass-border) !important;
+      box-shadow: 0 8px 24px var(--glass-shadow) !important;
+      position: relative;
+      isolation: isolate;
+      background-clip: padding-box;
+      will-change: backdrop-filter, background-color;
+      transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+
+    /* Subtle inner highlight without making it opaque */
+    .section-header .header-wrapper::after{
+      content:"";
+      position:absolute; inset:0; pointer-events:none;
+      border-radius: inherit;
+      box-shadow: inset 0 .5px 0 var(--glass-highlight), inset 0 -1px 0 rgba(0,0,0,.10);
+      opacity:.85;
+    }
+
+    /* More opacity when scrolled for readability */
+    .scrolled-past-header .header-wrapper{
+      background: var(--glass-bg-scrolled) !important;
+      border-bottom-color: rgba(0,0,0,.14) !important;
+      box-shadow: 0 10px 28px var(--glass-shadow) !important;
+    }
+
+    /* Hover lift stays subtle; still frosty */
+    .section-header .header-wrapper:hover{
+      background: var(--glass-bg-strong) !important;
+      box-shadow: 0 12px 36px rgba(0,0,0,.18) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Black text/icons on frosted white */
+    .section-header .header,
+    .section-header .header *:not(.cart-count-bubble){
+      color:#000 !important;
+      fill:#000 !important;
+      stroke:#000 !important;
+    }
+    .header__heading-logo img{ filter:brightness(0); }
+
+    /* Drawer keeps a touch more opacity for contrast */
+    .menu-drawer,
+    .menu-drawer__inner-container,
+    .menu-drawer__navigation,
+    .menu-drawer__submenu,
+    .menu-drawer__utility-links,
+    .menu-drawer .gradient{
+      background: var(--glass-bg-strong) !important;
+      color:#000 !important;
+      -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+      backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+      box-shadow: inset 0 .5px 0 var(--glass-highlight), 0 8px 28px var(--glass-shadow);
+    }
+
+    /* Country selector pill matches frost */
+    .section-header .localization-form__select{
+      background: var(--glass-bg-strong) !important;
+      color:#000 !important;
+      border:1px solid var(--glass-border) !important;
+      border-radius: 8px !important;
+      box-shadow: inset 0 .5px 0 var(--glass-highlight), 0 8px 20px var(--glass-shadow) !important;
+      -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+      backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+      transition: background .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .section-header .localization-form__select:hover{
+      background: rgba(255,255,255,.98) !important;
+      box-shadow: inset 0 .5px 0 var(--glass-highlight), 0 12px 28px rgba(0,0,0,.28) !important;
+      transform: translateY(-1px);
+    }
+    .section-header .localization-form__select .icon-caret{ color:#000 !important; fill:currentColor !important; }
+
+    /* Dropdown matches frost */
+    .section-header .disclosure__list-wrapper{
+      background: var(--glass-bg-strong) !important;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 10px !important;
+      box-shadow: inset 0 .5px 0 var(--glass-highlight), 0 10px 32px var(--glass-shadow) !important;
+      padding: 6px !important;
+      -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+      backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+      z-index: 1000 !important;
+    }
+    .section-header .disclosure__link{ color:#000 !important; transition: background .12s ease; }
+    .section-header .disclosure__link:hover{ background: rgba(0,0,0,.08) !important; border-radius: 6px; }
+    .section-header .disclosure__link[aria-current="true"]{
+      text-decoration: underline;
+      background: rgba(0,0,0,.12) !important;
+      border-radius: 6px;
+    }
+
+    /* Make the next section sit under the header on white pages too (so blur works) */
+    .section-header + .shopify-section{
+      position: relative;
+      z-index: 0;
+      margin-top: calc(-1 * var(--header-height));
+      padding-top: var(--header-height);
+    }
+
+    /* Fallbacks for browsers without backdrop-filter */
+    @supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+      .section-header .header-wrapper,
+      .section-header .header-wrapper.gradient{
+        background: rgba(255,255,255,.90) !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+      }
+      .menu-drawer, .menu-drawer__inner-container{
+        background: rgba(255,255,255,.96) !important;
+      }
+      .section-header + .shopify-section{ margin-top: 0; padding-top: 0; }
+    }
+
+    @media (prefers-reduced-transparency: reduce){
+      .section-header .header-wrapper,
+      .section-header .header-wrapper.gradient{
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(255,255,255,.94) !important;
+      }
+      .menu-drawer,
+      .section-header .localization-form__select,
+      .section-header .disclosure__list-wrapper{
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+    }
+
+    /* ----- FROST UNBLOCKER (Dawn overlays & solid backgrounds) ----- */
+
+    /* Clear solid/gradient backgrounds applied by color schemes or wrappers */
+    .section-header,
+    .section-header .header,
+    .section-header .header .page-width,
+    .section-header .header .header__menu,
+    .section-header .header .header__heading,
+    .section-header .header .header__icons,
+    .section-header [class*="color-"],
+    .section-header .gradient {
+      background: transparent !important;
+      background-image: none !important;
+    }
+
+    /* Dawn’s gradient overlay uses ::before — remove so blur shows through */
+    .section-header .header-wrapper.gradient::before,
+    .section-header .header-wrapper::before,
+    .section-header .header::before,
+    .section-header .header::after {
+      content: none !important;
+      display: none !important;
+      background: transparent !important;
+    }
+
+    /* Ensure the frosted layer owns the blur */
+    .section-header .header-wrapper,
+    .section-header .header-wrapper.gradient {
+      -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur)) !important;
+      backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur)) !important;
+      background: var(--glass-bg) !important;            /* must be semi-transparent */
+      background-image: none !important;
+      background-clip: padding-box;
+      isolation: isolate;
+      transform: translateZ(0);
+      will-change: backdrop-filter, background-color;
+    }
+
+    /* Keep the menu drawer translucent as well */
+    .section-header .menu-drawer,
+    .section-header .menu-drawer__inner-container,
+    .section-header .menu-drawer__navigation,
+    .section-header .menu-drawer__submenu,
+    .section-header .menu-drawer__utility-links,
+    .section-header .menu-drawer .gradient {
+      background: var(--glass-bg-strong) !important;
+      background-image: none !important;
+      -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur)) !important;
+      backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur)) !important;
+    }
+  </style>
+{% endif %}
+
+{% comment %}
+  ===== SOLID BLACK HEADER PAGES =====
+  policy + 404 → black header + white text + inverted logo; remove bead
+{% endcomment %}
+{% if request.page_type == 'policy' or request.page_type == '404' %}
+  <style>
+    .section-header .header-wrapper,
+    .section-header .header-wrapper.gradient{
+      background:#000 !important;
+      -webkit-backdrop-filter:none !important;
+      backdrop-filter:none !important;
+      border-bottom:0 !important;
+      box-shadow:none !important;
+    }
+    .section-header .header,
+    .section-header .header *:not(.cart-count-bubble){
+      color:#fff !important; fill:#fff !important; stroke:#fff !important;
+    }
+    .header__heading-logo img{ filter:brightness(0) invert(1); }
+
+    .menu-drawer, .menu-drawer__inner-container, .menu-drawer__navigation,
+    .menu-drawer__submenu, .menu-drawer__utility-links, .menu-drawer .gradient{
+      background:#000 !important; color:#fff !important;
+    }
+    .menu-drawer a, .menu-drawer button, .menu-drawer .icon,
+    .menu-drawer .list-social__link, .menu-drawer .localization-form__select{
+      color:#fff !important; fill:#fff !important; stroke:#fff !important; opacity:1 !important; transition:none !important;
+    }
+
+    /* Dropdown on dark header */
+    .section-header .disclosure__list-wrapper{
+      background:#000 !important;
+      color:#fff !important;
+      border:1px solid rgba(255,255,255,.14) !important;
+      border-radius:10px !important;
+      box-shadow:0 10px 24px rgba(0,0,0,.6) !important;
+      padding:6px !important;
+    }
+    .section-header .disclosure__link{ color:#fff !important; }
+  </style>
+{% endif %}
+
+<svg xmlns="http://www.w3.org/2000/svg" class="hidden">
+  <symbol id="icon-search" viewbox="0 0 18 19" fill="none">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M11.03 11.68A5.784 5.784 0 112.85 3.5a5.784 5.784 0 018.18 8.18zm.26 1.12a6.78 6.78 0 11.72-.7l5.4 5.4a.5.5 0 11-.71.7l-5.41-5.4z" fill="currentColor"/>
+  </symbol>
+  <symbol id="icon-reset" class="icon icon-close" fill="none" viewBox="0 0 18 18" stroke="currentColor">
+    <circle r="8.5" cy="9" cx="9" stroke-opacity="0.2"/>
+    <path d="M6.82972 6.82915L1.17193 1.17097" stroke-linecap="round" stroke-linejoin="round" transform="translate(5 5)"/>
+    <path d="M1.22896 6.88502L6.77288 1.11523" stroke-linecap="round" stroke-linejoin="round" transform="translate(5 5)"/>
+  </symbol>
+  <symbol id="icon-close" class="icon icon-close" fill="none" viewBox="0 0 18 17">
+    <path d="M.865 15.978a.5.5 0 00.707.707l7.433-7.431 7.579 7.282a.501.501 0 00.846-.37.5.5 0 00-.153-.351L9.712 8.546l7.417-7.416a.5.5 0 10-.707-.708L8.991 7.853 1.413.573a.5.5 0 10-.693.72l7.563 7.268-7.418 7.417z" fill="currentColor"/>
+  </symbol>
+</svg>
+
+{%- liquid
+  for block in section.blocks
+    if block.type == '@app'
+      assign has_app_block = true
+    endif
+  endfor
+-%}
+
+<{% if section.settings.sticky_header_type != 'none' %}sticky-header data-sticky-type="{{ section.settings.sticky_header_type }}"{% else %}div{% endif %} class="header-wrapper color-{{ section.settings.color_scheme }} gradient{% if section.settings.show_line_separator %} header-wrapper--border-bottom{% endif %}">
+  {%- liquid
+    assign social_links = false
+    assign localization_forms = false
+
+    if settings.social_twitter_link != blank or settings.social_facebook_link != blank or settings.social_pinterest_link != blank or settings.social_instagram_link != blank or settings.social_youtube_link != blank or settings.social_vimeo_link != blank or settings.social_tiktok_link != blank or settings.social_tumblr_link != blank or settings.social_snapchat_link != blank
+      assign social_links = true
+    endif
+
+    if section.settings.enable_country_selector and localization.available_countries.size > 1
+      assign localization_forms = true
+    endif
+  -%}
+  <header class="header header--{{ section.settings.logo_position }} header--mobile-{{ section.settings.mobile_logo_position }} page-width{% if section.settings.menu != blank %} header--has-menu{% endif %}{% if has_app_block %} header--has-app{% endif %}{% if social_links %} header--has-social{% endif %}{% if localization_forms %} header--has-localizations{% endif %}">
+    {%- liquid
+      if section.settings.menu != blank
+        render 'header-drawer'
+      endif
+    -%}
+
+    {%- if section.settings.logo_position != 'middle-center' -%}
+      {%- if request.page_type == 'index' -%}<h1 class="header__heading">{%- endif -%}
+        {% if request.page_type == 'collection' or request.page_type == 'product' or request.page_type == 'cart' or request.page_type == 'checkout' %}
+          <a href="{{ routes.root_url }}" class="header__heading-link link link--text focus-inset">
+            <div class="header__heading-logo-wrapper">
+              <img src="{{ 'Black_Transparent_Large_c26c6606-38fb-4241-8855-a3a58117218a.png' | file_url }}" alt="{{ shop.name }}" width="{{ settings.logo_width }}" class="header__heading-logo" loading="lazy">
+            </div>
+          </a>
+        {% else %}
+          <a href="{{ routes.root_url }}" class="header__heading-link link link--text focus-inset">
+            {%- if settings.logo != blank -%}
+              <div class="header__heading-logo-wrapper">
+                {%- assign logo_alt = settings.logo.alt | default: shop.name | escape -%}
+                {%- assign logo_height = settings.logo_width | divided_by: settings.logo.aspect_ratio -%}
+                {% capture sizes %}(max-width: {{ settings.logo_width | times: 2 }}px) 50vw, {{ settings.logo_width }}px{% endcapture %}
+                {% capture widths %}{{ settings.logo_width }}, {{ settings.logo_width | times: 1.5 | round }}, {{ settings.logo_width | times: 2 }}{% endcapture %}
+                {{ settings.logo | image_url: width: 600 | image_tag:
+                  class: 'header__heading-logo motion-reduce',
+                  widths: widths, height: logo_height, width: settings.logo_width,
+                  alt: logo_alt, sizes: sizes, preload: true }}
+              </div>
+            {%- else -%}
+              <span class="h2">{{ shop.name }}</span>
+            {%- endif -%}
+          </a>
+        {% endif %}
+      {%- if request.page_type == 'index' -%}</h1>{%- endif -%}
+    {%- endif -%}
+
+    {%- liquid
+      if section.settings.menu != blank
+        render 'header-dropdown-menu'
+      endif
+    %}
+
+    {%- if section.settings.logo_position == 'middle-center' -%}
+      {%- if request.page_type == 'index' -%}<h1 class="header__heading">{%- endif -%}
+        {% if request.page_type == 'collection' or request.page_type == 'product' or request.page_type == 'cart' or request.page_type == 'checkout' %}
+          <a href="{{ routes.root_url }}" class="header__heading-link link link--text focus-inset">
+            <div class="header__heading-logo-wrapper">
+              <img src="{{ 'Black_Transparent_Large_c26c6606-38fb-4241-8855-a3a58117218a.png' | file_url }}" alt="{{ shop.name }}" width="{{ settings.logo_width }}" class="header__heading-logo" loading="lazy">
+            </div>
+          </a>
+        {% else %}
+          <a href="{{ routes.root_url }}" class="header__heading-link link link--text focus-inset">
+            {%- if settings.logo != blank -%}
+              <div class="header__heading-logo-wrapper">
+                {%- assign logo_alt = settings.logo.alt | default: shop.name | escape -%}
+                {%- assign logo_height = settings.logo_width | divided_by: settings.logo.aspect_ratio -%}
+                {% capture sizes %}(min-width: 750px) {{ settings.logo_width }}px, 50vw{% endcapture %}
+                {% capture widths %}{{ settings.logo_width }}, {{ settings.logo_width | times: 1.5 | round }}, {{ settings.logo_width | times: 2 }}{% endcapture %}
+                {{ settings.logo | image_url: width: 600 | image_tag:
+                  class: 'header__heading-logo',
+                  widths: widths, height: logo_height, width: settings.logo_width,
+                  alt: logo_alt, sizes: sizes, preload: true }}
+              </div>
+            {%- else -%}
+              <span class="h2">{{ shop.name }}</span>
+            {%- endif -%}
+          </a>
+        {% endif %}
+      {%- if request.page_type == 'index' -%}</h1>{%- endif -%}
+    {%- endif -%}
+
+    <div class="header__icons{% if section.settings.enable_country_selector %} header__icons--localization header-localization{% endif %}">
+      <div class="desktop-localization-wrapper">
+        {%- if section.settings.enable_country_selector and localization.available_countries.size > 1 -%}
+          <localization-form class="small-hide medium-hide" data-prevent-hide>
+            {%- form 'localization', id: 'HeaderCountryForm', class: 'localization-form' -%}
+              <div>
+                <h2 class="visually-hidden" id="HeaderCountryLabel">{{ 'localization.country_label' | t }}</h2>
+                {%- render 'country-localization', localPosition: 'HeaderCountry' -%}
+              </div>
+            {%- endform -%}
+          </localization-form>
+        {% endif %}
+      </div>
+
+      {%- for block in section.blocks -%}
+        {%- case block.type -%}
+          {%- when '@app' -%}{% render block %}
+        {%- endcase -%}
+      {%- endfor -%}
+
+      <a href="{{ routes.cart_url }}" class="header__icon header__icon--cart link focus-inset" id="cart-icon-bubble">
+        {%- liquid
+          if cart == empty
+            render 'icon-cart-empty'
+          else
+            render 'icon-cart'
+          endif
+        -%}
+        <span class="visually-hidden">{{ 'templates.cart.cart' | t }}</span>
+        {%- if cart != empty -%}
+          <div class="cart-count-bubble">
+            {%- if cart.item_count < 100 -%}<span aria-hidden="true">{{ cart.item_count }}</span>{%- endif -%}
+            <span class="visually-hidden">{{ 'sections.header.cart_count' | t: count: cart.item_count }}</span>
+          </div>
+        {%- endif -%}
+      </a>
+    </div>
+  </header>
+</{% if section.settings.sticky_header_type != 'none' %}sticky-header{% else %}div{% endif %}>
+
+{%- if settings.cart_type == "notification" -%}
+  {%- render 'cart-notification', color_scheme: section.settings.color_scheme, desktop_menu_type: 'dropdown' -%}
+{%- endif -%}
+
+{% javascript %}
+  class StickyHeader extends HTMLElement {
+    constructor(){ super(); }
+    connectedCallback(){
+      this.header = document.querySelector('.section-header');
+      this.headerIsAlwaysSticky = this.getAttribute('data-sticky-type') === 'always' || this.getAttribute('data-sticky-type') === 'reduce-logo-size';
+      this.headerBounds = {};
+      this.setHeaderHeight();
+      window.matchMedia('(max-width: 990px)').addEventListener('change', this.setHeaderHeight.bind(this));
+      if (this.headerIsAlwaysSticky){ this.header.classList.add('shopify-section-header-sticky'); }
+      this.currentScrollTop = 0;
+      this.preventReveal = false;
+      this.predictiveSearch = this.querySelector('predictive-search');
+      this.onScrollHandler = this.onScroll.bind(this);
+      this.hideHeaderOnScrollUp = () => this.preventReveal = true;
+      this.addEventListener('preventHeaderReveal', this.hideHeaderOnScrollUp);
+      window.addEventListener('scroll', this.onScrollHandler, false);
+      this.createObserver();
+    }
+    setHeaderHeight(){ document.documentElement.style.setProperty('--header-height', `${this.header.offsetHeight}px`); }
+    disconnectedCallback(){ this.removeEventListener('preventHeaderReveal', this.hideHeaderOnScrollUp); window.removeEventListener('scroll', this.onScrollHandler); }
+    createObserver(){
+      let observer = new IntersectionObserver((entries, observer) => { this.headerBounds = entries[0].intersectionRect; observer.disconnect(); });
+      observer.observe(this.header);
+    }
+    onScroll(){
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      if (this.predictiveSearch && this.predictiveSearch.isOpen) return;
+      if (scrollTop > this.currentScrollTop && scrollTop > this.headerBounds.bottom){
+        this.header.classList.add('scrolled-past-header');
+        if (this.preventHide) return;
+        requestAnimationFrame(this.hide.bind(this));
+      } else if (scrollTop < this.currentScrollTop && scrollTop > this.headerBounds.bottom){
+        this.header.classList.add('scrolled-past-header');
+        if (!this.preventReveal){ requestAnimationFrame(this.reveal.bind(this)); }
+        else { window.clearTimeout(this.isScrolling); this.isScrolling = setTimeout(() => { this.preventReveal = false; }, 66); requestAnimationFrame(this.hide.bind(this)); }
+      } else if (scrollTop <= this.headerBounds.top){
+        this.header.classList.remove('scrolled-past-header');
+        requestAnimationFrame(this.reset.bind(this));
+      }
+      this.currentScrollTop = scrollTop;
+    }
+    hide(){ if (this.headerIsAlwaysSticky) return; this.header.classList.add('shopify-section-header-hidden','shopify-section-header-sticky'); this.closeMenuDisclosure(); this.closeSearchModal(); }
+    reveal(){ if (this.headerIsAlwaysSticky) return; this.header.classList.add('shopify-section-header-sticky','animate'); this.header.classList.remove('shopify-section-header-hidden'); }
+    reset(){ if (this.headerIsAlwaysSticky) return; this.header.classList.remove('shopify-section-header-hidden','shopify-section-header-sticky','animate'); }
+    closeMenuDisclosure(){ this.disclosures = this.disclosures || this.header.querySelectorAll('header-menu'); this.disclosures.forEach(disclosure => disclosure.close()); }
+    closeSearchModal(){ this.searchModal = this.searchModal || this.header.querySelector('details-modal'); this.searchModal.close(false); }
+  }
+  customElements.define('sticky-header', StickyHeader);
+
+  /* Open external links in new tab */
+  (function(){
+    function setExternalTargets(root){
+      if (!root) return;
+      const anchors = root.querySelectorAll('a[href]');
+      anchors.forEach(a => {
+        const href = a.getAttribute('href');
+        if (!href) return;
+        const lc = href.trim().toLowerCase();
+        if (lc.startsWith('#') || lc.startsWith('mailto:') || lc.startsWith('tel:') || lc.startsWith('javascript:')) return;
+        let url;
+        try { url = new URL(href, window.location.origin); } catch(e){ return; }
+        if (url.host && url.host !== window.location.host){
+          a.setAttribute('target','_blank');
+          a.setAttribute('rel','noopener');
+        }
+      });
+    }
+
+    const headerSection = document.querySelector('.section-header');
+    if (headerSection){
+      setExternalTargets(headerSection);
+      const mo = new MutationObserver(() => setExternalTargets(headerSection));
+      mo.observe(headerSection, { childList: true, subtree: true });
+    } else {
+      setExternalTargets(document);
+    }
+  })();
+
+  /* Remove any language selectors injected by other snippets/apps (keep country) */
+  (function removeLanguageSelectors(){
+    const sels = [
+      '#HeaderLanguageForm',
+      '#DrawerLanguageForm',
+      '[id*="LanguageList"]',
+      '[aria-controls*="LanguageList"]'
+    ];
+    function nuke(root=document){
+      sels.forEach(sel=>{
+        root.querySelectorAll(sel).forEach(node=>{
+          (node.closest('localization-form') || node).remove();
+        });
+      });
+    }
+    nuke();
+    new MutationObserver(()=>nuke()).observe(document.body,{childList:true,subtree:true});
+  })();
+{% endjavascript %}
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Organization",
+    "name": {{ shop.name | json }},
+    {% if settings.logo %}"logo": {{ settings.logo | image_url: width: 500 | prepend: "https:" | json }},{% endif %}
+    "sameAs": [{{ settings.social_twitter_link | json }},{{ settings.social_facebook_link | json }},{{ settings.social_pinterest_link | json }},{{ settings.social_instagram_link | json }},{{ settings.social_tiktok_link | json }},{{ settings.social_tumblr_link | json }},{{ settings.social_snapchat_link | json }},{{ settings.social_youtube_link | json }},{{ settings.social_vimeo_link | json }}],
+    "url": {{ request.origin | append: page.url | json }}
+  }
+</script>
+
+{%- if request.page_type == 'index' -%}
+  {% assign potential_action_target = request.origin | append: routes.search_url | append: "?q={search_term_string}" %}
+  <script type="application/ld+json">
+    {"@context":"http://schema.org","@type":"WebSite","name":{{ shop.name | json }},"potentialAction":{"@type":"SearchAction","target":{{ potential_action_target | json }},"query-input":"required name=search_term_string"},"url":{{ request.origin | append: page.url | json }}}
+  </script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Header Clamper",
+}
+{% endschema %}

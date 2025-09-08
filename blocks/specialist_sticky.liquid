@@ -1,0 +1,261 @@
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  /* Maps editor controls to your global .lg-btn variables */
+  .specialist-tokens-{{ ai_gen_id }}{
+    --lg-btn-radius: {{ block.settings.border_radius | default: 50 }}px;
+    --lg-btn-py: {{ block.settings.padding_y | default: 14 }}px;
+    --lg-btn-px: {{ block.settings.padding_x | default: 28 }}px;
+
+    /* Subtle outline colors for dark glass */
+    --lg-outline-color: rgba(255,255,255,.16);
+    --lg-outline-color-hover: rgba(255,255,255,.22);
+  }
+
+  /* Sticky container positioning (unchanged) */
+  .specialist-sticky-container-{{ ai_gen_id }}{
+    position: fixed;
+    z-index: {% assign z_val = block.settings.z_index | default: 1000 %}{% if z_val < 100 %}100{% else %}{{ z_val }}{% endif %};
+    pointer-events:none; transition:none; will-change: transform;
+    {% case block.settings.position %}
+      {% when 'top-left' %}     top: calc(var(--header-height,60px) + {{ block.settings.offset_y | default: 20 }}px); left: {{ block.settings.offset_x | default: 20 }}px;
+      {% when 'top-right' %}    top: calc(var(--header-height,60px) + {{ block.settings.offset_y | default: 20 }}px); right: {{ block.settings.offset_x | default: 20 }}px;
+      {% when 'bottom-left' %}  bottom: calc(env(safe-area-inset-bottom,0px) + {{ block.settings.offset_y | default: 20 }}px); left: {{ block.settings.offset_x | default: 20 }}px;
+      {% when 'bottom-right' %} bottom: calc(env(safe-area-inset-bottom,0px) + {{ block.settings.offset_y | default: 20 }}px); right: {{ block.settings.offset_x | default: 20 }}px;
+      {% when 'center-bottom' %}bottom: calc(env(safe-area-inset-bottom,0px) + {{ block.settings.offset_y | default: 20 }}px); left:50%; transform:translateX(-50%);
+      {% when 'center-top' %}   top: calc(var(--header-height,60px) + {{ block.settings.offset_y | default: 20 }}px); left:50%; transform:translateX(-50%);
+      {% else %}                bottom: calc(env(safe-area-inset-bottom,0px) + {{ block.settings.offset_y | default: 20 }}px); right: {{ block.settings.offset_x | default: 20 }}px;
+    {% endcase %}
+  }
+
+  /* Button layout only; skin comes from .lg-btn (forced to dark) */
+  .specialist-sticky-btn-{{ ai_gen_id }}{
+    display:inline-flex; align-items:center; justify-content:center;
+    gap: {{ block.settings.icon_spacing | default: 8 }}px;
+    text-decoration:none; cursor:pointer; white-space:nowrap;
+    pointer-events:auto; user-select:none; position:relative;
+
+    min-height: {{ block.settings.button_height | default: 50 }}px;
+    padding: var(--lg-btn-py) var(--lg-btn-px) !important;
+    border-radius: var(--lg-btn-radius) !important;
+    max-width: calc(100vw - {{ block.settings.offset_x | default: 20 | times: 2 }}px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    font-weight: {{ block.settings.font_weight | default: 600 }};
+    font-size: {{ block.settings.font_size | default: 16 }}px;
+    letter-spacing:-.011em;
+
+    /* Make sure the label color we set wins over theme color schemes */
+    color: var(--lg-btn-color) !important;
+    border: none; /* baseline; outline toggle adds border */
+  }
+
+  /* Optional classy outline for the dark glass button */
+  .specialist-outline-{{ ai_gen_id }}{
+    border: 1px solid var(--lg-outline-color) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 1px 0 rgba(255,255,255,.06),
+      0 8px 24px rgba(0,0,0,.35);
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .specialist-outline-{{ ai_gen_id }}:hover{
+    border-color: var(--lg-outline-color-hover) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.12),
+      0 1px 0 rgba(255,255,255,.09),
+      0 10px 28px rgba(0,0,0,.4);
+  }
+
+  .specialist-sticky-btn-{{ ai_gen_id }}:focus-visible{ outline:2px solid rgba(255,255,255,.9); outline-offset:2px; }
+
+  /* Label treatments for DARK ONLY (always-on dark space gray skin) */
+  .specialist-sticky-btn-{{ ai_gen_id }}.lg-btn--dark{
+    --lg-btn-color: {{ block.settings.label_color_dark | default: '#E9EEF6' }}; /* pearl */
+    text-shadow: 0 1px 0 rgba(0,0,0,.45), 0 0 18px rgba(255,255,255,.15);
+    -webkit-text-stroke: .2px rgba(0,0,0,.35);
+  }
+
+  /* Icon inherits currentColor */
+  .specialist-sticky-icon-{{ ai_gen_id }}{ width: {{ block.settings.icon_size | default: 20 }}px; height: {{ block.settings.icon_size | default: 20 }}px; color: currentColor; }
+
+  /* Drawer safety */
+  .menu-drawer,.menu-drawer__overlay,.header__overlay,header-drawer [role="dialog"],header-drawer .menu-drawer__inner-container{ z-index:10010!important; }
+  html:has(.menu-drawer[open]) .specialist-sticky-container-{{ ai_gen_id }},
+  html:has(header-drawer details[open]) .specialist-sticky-container-{{ ai_gen_id }},
+  html:has(details[open][data-drawer]) .specialist-sticky-container-{{ ai_gen_id }},
+  html:has(details[open][id*="Menu"]) .specialist-sticky-container-{{ ai_gen_id }},
+  html:has(details[open][class*="drawer"]) .specialist-sticky-container-{{ ai_gen_id }},
+  html.menu-open .specialist-sticky-container-{{ ai_gen_id }},
+  body.menu-open .specialist-sticky-container-{{ ai_gen_id }},
+  .mobile-nav-open .specialist-sticky-container-{{ ai_gen_id }},
+  .nav-open .specialist-sticky-container-{{ ai_gen_id }},
+  .drawer-open .specialist-sticky-container-{{ ai_gen_id }},
+  .menu-drawer-open .specialist-sticky-container-{{ ai_gen_id }},
+  .sidebar-open .specialist-sticky-container-{{ ai_gen_id }}{ display:none!important; }
+
+  /* Mobile */
+  @media (max-width:768px){
+    .specialist-sticky-container-{{ ai_gen_id }}{
+      {% if block.settings.position == 'top-right' or block.settings.position == 'top-left' or block.settings.position == 'center-top' %}
+        top: calc(var(--header-height, 60px) + var(--header-padding, 10px) + {{ block.settings.mobile_offset_y | default: 20 }}px);
+      {% endif %}
+      {% if block.settings.position contains 'bottom' %}
+        bottom: calc(env(safe-area-inset-bottom, 0px) + {{ block.settings.mobile_offset_y | default: 20 }}px);
+      {% endif %}
+    }
+    {% if block.settings.position == 'top-right' %}
+      .specialist-sticky-container-{{ ai_gen_id }}{ right: calc({{ block.settings.mobile_offset_x | default: 16 }}px + 60px)!important; }
+    {% endif %}
+    {% if block.settings.position == 'top-left' %}
+      .specialist-sticky-container-{{ ai_gen_id }}{ left: calc({{ block.settings.mobile_offset_x | default: 16 }}px + 60px)!important; }
+    {% endif %}
+    .specialist-sticky-btn-{{ ai_gen_id }}{
+      min-height: {{ block.settings.mobile_button_height | default: 44 }}px;
+      padding: {{ block.settings.mobile_padding_y | default: 12 }}px {{ block.settings.mobile_padding_x | default: 24 }}px !important;
+      max-width: calc(100vw - {{ block.settings.mobile_offset_x | default: 32 }}px);
+      font-size: {{ block.settings.mobile_font_size | default: 14 }}px !important;
+    }
+    .specialist-sticky-icon-{{ ai_gen_id }}{ width: {{ block.settings.mobile_icon_size | default: 18 }}px; height: {{ block.settings.mobile_icon_size | default: 18 }}px; }
+  }
+  @media (prefers-reduced-motion: reduce){ .specialist-sticky-btn-{{ ai_gen_id }}{ transition:none!important; } }
+{% endstyle %}
+
+{% if block.settings.show_button and block.settings.button_text != blank %}
+  <div class="specialist-tokens-{{ ai_gen_id }} specialist-sticky-container-{{ ai_gen_id }}"
+       data-position="{{ block.settings.position }}"
+       {{ block.shopify_attributes }}>
+
+    {%- assign btn_url = block.settings.button_url | default: '' -%}
+    {%- assign outline_class = '' -%}
+    {%- if block.settings.enable_outline -%}{%- assign outline_class = ' specialist-outline-' | append: ai_gen_id -%}{%- endif -%}
+
+    {% if btn_url != '' %}
+      <a id="specialist-link-{{ ai_gen_id }}"
+         href="{{ btn_url }}"
+         class="lg-btn lg-btn--dark specialist-sticky-btn-{{ ai_gen_id }}{{ outline_class }}"
+         aria-label="{{ block.settings.button_text | escape }}"
+         rel="noopener noreferrer"
+         {% if block.settings.open_in_new_tab %}target="_blank"{% endif %}
+         onclick="handleSpecialistClick(event, this)">
+        {% if block.settings.show_icon and block.settings.custom_icon != blank %}
+          <img src="{{ block.settings.custom_icon | image_url: width: 40 }}" alt="" class="specialist-sticky-icon-{{ ai_gen_id }}" loading="lazy">
+        {% elsif block.settings.show_icon %}
+          {% case block.settings.icon_type %}
+            {% when 'phone' %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            {% when 'chat' %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {% when 'support' %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+            {% when 'email' %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+            {% else %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          {% endcase %}
+        {% endif %}
+        {{ block.settings.button_text }}
+      </a>
+    {% else %}
+      <button type="button"
+              class="lg-btn lg-btn--dark specialist-sticky-btn-{{ ai_gen_id }}{{ outline_class }}"
+              aria-label="{{ block.settings.button_text | escape }}"
+              onclick="handleSpecialistClick(event, this)">
+        {% if block.settings.show_icon and block.settings.custom_icon != blank %}
+          <img src="{{ block.settings.custom_icon | image_url: width: 40 }}" alt="" class="specialist-sticky-icon-{{ ai_gen_id }}" loading="lazy">
+        {% elsif block.settings.show_icon %}
+          {% case block.settings.icon_type %}
+            {% when 'phone' %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            {% when 'chat' %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {% when 'support' %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+            {% when 'email' %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+            {% else %}<svg class="specialist-sticky-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          {% endcase %}
+        {% endif %}
+        {{ block.settings.button_text }}
+      </button>
+    {% endif %}
+  </div>
+
+  <script>
+    function handleSpecialistClick(event, element){
+      if (typeof gtag !== 'undefined'){
+        gtag('event','click',{event_category:'Specialist Button',event_label:'{{ block.settings.button_text | escape }}',value:1});
+      }
+      window.dispatchEvent(new CustomEvent('specialistButtonClick', {
+        detail:{ text:'{{ block.settings.button_text | escape }}', url:'{{ block.settings.button_url | escape }}', position:'{{ block.settings.position }}' }
+      }));
+    }
+    (function(){
+      const a = document.getElementById('specialist-link-{{ ai_gen_id }}'); if(!a) return;
+      let external=false; try{ const u=new URL(a.href,location.origin); external = u.host!==location.host; }catch(e){}
+      if(external && !a.hasAttribute('target')) a.setAttribute('target','_blank');
+      a.setAttribute('rel','noopener noreferrer');
+      const inEditor = !!(window.Shopify && Shopify.designMode);
+      if(inEditor && external){
+        a.addEventListener('click',(e)=>{ e.preventDefault(); alert('External links are blocked inside the Theme Editor. Use Preview to test.'); },{capture:true});
+      }
+    })();
+  </script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Specialist Sticky Button",
+  "settings": [
+    { "type": "header", "content": "Button Display" },
+    { "type": "checkbox", "id": "show_button", "label": "Show specialist button", "default": true },
+    { "type": "text", "id": "button_text", "label": "Button text", "default": "Talk to a Specialist" },
+    { "type": "url", "id": "button_url", "label": "Button URL" },
+    { "type": "checkbox", "id": "open_in_new_tab", "label": "Open in new tab", "default": false },
+
+    { "type": "header", "content": "Label (Dark skin only)" },
+    { "type": "color", "id": "label_color_dark", "label": "Label color on dark", "default": "#E9EEF6" },
+
+    { "type": "header", "content": "Icon" },
+    { "type": "checkbox", "id": "show_icon", "label": "Show icon", "default": true },
+    { "type": "select", "id": "icon_type", "label": "Icon type", "default": "phone",
+      "options": [
+        { "value": "phone", "label": "Phone" },
+        { "value": "chat", "label": "Chat" },
+        { "value": "support", "label": "Support" },
+        { "value": "email", "label": "Email" }
+      ]
+    },
+    { "type": "image_picker", "id": "custom_icon", "label": "Custom icon" },
+    { "type": "range", "id": "icon_size", "label": "Icon size", "min": 14, "max": 30, "step": 2, "default": 20, "unit": "px" },
+    { "type": "range", "id": "mobile_icon_size", "label": "Mobile icon size", "min": 12, "max": 24, "step": 2, "default": 18, "unit": "px" },
+    { "type": "range", "id": "icon_spacing", "label": "Icon spacing", "min": 4, "max": 16, "step": 2, "default": 8, "unit": "px" },
+
+    { "type": "header", "content": "Position & Layout" },
+    { "type": "select", "id": "position", "label": "Button position", "default": "bottom-right",
+      "options": [
+        { "value": "top-left", "label": "Top Left" },
+        { "value": "top-right", "label": "Top Right" },
+        { "value": "center-top", "label": "Center Top" },
+        { "value": "bottom-left", "label": "Bottom Left" },
+        { "value": "bottom-right", "label": "Bottom Right" },
+        { "value": "center-bottom", "label": "Center Bottom" }
+      ]
+    },
+    { "type": "range", "id": "offset_x", "label": "Horizontal offset", "min": 10, "max": 100, "step": 5, "default": 20, "unit": "px" },
+    { "type": "range", "id": "offset_y", "label": "Vertical offset", "min": 10, "max": 100, "step": 5, "default": 20, "unit": "px" },
+    { "type": "range", "id": "mobile_offset_x", "label": "Mobile horizontal offset", "min": 10, "max": 50, "step": 2, "default": 16, "unit": "px" },
+    { "type": "range", "id": "mobile_offset_y", "label": "Mobile vertical offset", "min": 10, "max": 50, "step": 2, "default": 20, "unit": "px" },
+
+    { "type": "header", "content": "Size & Typography" },
+    { "type": "range", "id": "font_size", "label": "Font size", "min": 12, "max": 20, "step": 1, "default": 16, "unit": "px" },
+    { "type": "range", "id": "mobile_font_size", "label": "Mobile font size", "min": 10, "max": 16, "step": 1, "default": 14, "unit": "px" },
+    { "type": "range", "id": "font_weight", "label": "Font weight", "min": 400, "max": 800, "step": 100, "default": 600 },
+    { "type": "range", "id": "button_height", "label": "Button height", "min": 40, "max": 70, "step": 2, "default": 50, "unit": "px" },
+    { "type": "range", "id": "mobile_button_height", "label": "Mobile button height", "min": 36, "max": 56, "step": 2, "default": 44, "unit": "px" },
+    { "type": "range", "id": "padding_x", "label": "Horizontal padding", "min": 16, "max": 40, "step": 2, "default": 28, "unit": "px" },
+    { "type": "range", "id": "padding_y", "label": "Vertical padding", "min": 8, "max": 24, "step": 2, "default": 14, "unit": "px" },
+    { "type": "range", "id": "mobile_padding_x", "label": "Mobile horizontal padding", "min": 12, "max": 32, "step": 2, "default": 24, "unit": "px" },
+    { "type": "range", "id": "mobile_padding_y", "label": "Mobile vertical padding", "min": 6, "max": 18, "step": 2, "default": 12, "unit": "px" },
+    { "type": "range", "id": "border_radius", "label": "Border radius", "min": 4, "max": 60, "step": 2, "default": 50, "unit": "px" },
+
+    { "type": "header", "content": "Dark Glass Outline" },
+    { "type": "checkbox", "id": "enable_outline", "label": "Enable subtle outline (blends with dark glass)", "default": true },
+
+    { "type": "header", "content": "Advanced" },
+    { "type": "number", "id": "z_index", "label": "Z-index", "default": 1000 },
+    { "type": "checkbox", "id": "hide_on_cart", "label": "Hide on cart page", "default": false },
+    { "type": "checkbox", "id": "hide_on_checkout", "label": "Hide on checkout page", "default": true }
+  ],
+  "presets": [{ "name": "Specialist Sticky Button" }]
+}
+{% endschema %}

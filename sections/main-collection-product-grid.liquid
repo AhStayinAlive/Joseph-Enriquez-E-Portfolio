@@ -1,0 +1,851 @@
+<!-- templates/collection.broen.liquid -->
+<!-- Premium Broen Collection Template with Professional Design -->
+
+<link rel="stylesheet" href="{{ 'component-product-grid.css' | asset_url }}" media="print" onload="this.media='all'">
+
+<style>
+  /* Reset and base styles */
+  .broen-collection-wrapper * {
+    box-sizing: border-box;
+  }
+
+  .broen-collection-wrapper {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    min-height: 100vh;
+    color: #ffffff;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* Header styling */
+  .broen-header {
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .broen-banner {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .broen-banner h1 {
+    color: #ffffff;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .broen-banner p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.25rem;
+    font-weight: 400;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+
+  /* Standard title styling - replacing any teal elements */
+  .standard-title {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 2rem 0 1rem 0;
+    text-align: center;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  /* Override any teal product title styling globally */
+  .broen-collection-wrapper .card__heading,
+  .broen-collection-wrapper .card-product-title,
+  .broen-collection-wrapper .product-title,
+  .broen-collection-wrapper h3,
+  .broen-collection-wrapper .product-card h3,
+  .broen-collection-wrapper .product-card-title {
+    background: none !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 0.75rem !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Override teal badges specifically */
+  .broen-collection-wrapper .badge,
+  .broen-collection-wrapper .card__badge,
+  .broen-collection-wrapper .product-badge {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* Remove any teal background from links */
+  .broen-collection-wrapper a,
+  .broen-collection-wrapper .card__heading a,
+  .broen-collection-wrapper .product-title-link {
+    background: none !important;
+    background-color: transparent !important;
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  .standard-title.large {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .standard-title.medium {
+    font-size: 1.75rem;
+    font-weight: 600;
+  }
+
+  .standard-title.small {
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  /* Alternative gray title variant */
+  .standard-title.gray {
+    color: #cccccc;
+  }
+
+  /* Alternative black title variant (for light backgrounds) */
+  .standard-title.black {
+    color: #000000;
+  }
+
+  /* Door filter buttons */
+  .door-filter-container {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 3rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .door-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .door-filter-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    opacity: 1;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .door-filter-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+  }
+
+  .door-filter-btn:hover::before {
+    left: 100%;
+  }
+
+  /* Hover state for non-active buttons */
+  .door-filter-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+  }
+
+  /* Active state - WHITE button for current filter */
+  .door-filter-btn.active {
+    background: rgba(255, 255, 255, 0.95);
+    color: #000000;
+    border-color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.15);
+    font-weight: 600;
+  }
+
+  /* Ensure active button hover doesn't change much */
+  .door-filter-btn.active:hover {
+    background: rgba(255, 255, 255, 1);
+    color: #000000;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.2);
+  }
+
+  /* Main content area */
+  .broen-main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+
+  /* Product count section */
+  .product-count-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+  }
+
+  .product-count {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  /* Product grid */
+  .broen-product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2.5rem;
+    margin-top: 2rem;
+  }
+
+  /* Product cards */
+  .broen-product-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    backdrop-filter: blur(10px);
+  }
+
+  .broen-product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .broen-product-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .broen-product-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Product image */
+  .broen-product-image {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  }
+
+  .broen-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .broen-product-card:hover .broen-product-image img {
+    transform: scale(1.1);
+  }
+
+  /* Product content */
+  .broen-product-content {
+    padding: 2rem;
+  }
+
+  .broen-product-name {
+    color: #ffffff !important;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    background: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .broen-product-name a {
+    color: inherit !important;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    background: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .broen-product-name a:hover {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  /* Rating */
+  .broen-product-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .broen-stars {
+    color: #FFD700;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+  }
+
+  .broen-rating-count {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    font-weight: 400;
+  }
+
+  /* Price */
+  .broen-product-price {
+    color: #ffffff;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    letter-spacing: -0.02em;
+  }
+
+  .broen-product-price .compare-price {
+    text-decoration: line-through;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1.3rem;
+    margin-right: 0.5rem;
+  }
+
+  /* Action buttons */
+  .broen-product-actions {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .broen-btn {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .broen-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+  }
+
+  .broen-btn:hover::before {
+    left: 100%;
+  }
+
+  .broen-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    color: #000000;
+    border-color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+  }
+
+  .broen-btn.primary {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+    color: #000000;
+    border-color: #ffffff;
+  }
+
+  .broen-btn.primary:hover {
+    background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.25);
+  }
+
+  /* Empty state */
+  .broen-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .broen-banner h1 {
+      font-size: 2.5rem;
+    }
+
+    .broen-banner p {
+      font-size: 1.1rem;
+    }
+
+    .door-filter-buttons {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .door-filter-btn {
+      width: 100%;
+      max-width: 280px;
+      padding: 1rem 1.5rem;
+    }
+
+    .product-count-section {
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .broen-product-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .broen-product-actions {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .broen-main-content {
+      padding: 2rem 1rem;
+    }
+
+    .door-filter-container {
+      padding: 2rem 0;
+    }
+
+    .standard-title.large {
+      font-size: 1.75rem;
+    }
+
+    .standard-title {
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .broen-product-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .broen-product-content {
+      padding: 1.5rem;
+    }
+  }
+
+  /* Loading states */
+  .broen-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .broen-btn.success {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border-color: #4CAF50;
+  }
+
+  .broen-btn.error {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+    border-color: #f44336;
+  }
+
+  /* Animation for filtered products */
+  .broen-product-card.filtered-in {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Global override for any teal styling that might leak in from other sections */
+  .broen-collection-wrapper *[style*="background"] {
+    background: transparent !important;
+  }
+
+  .broen-collection-wrapper *[style*="teal"],
+  .broen-collection-wrapper *[style*="#008080"],
+  .broen-collection-wrapper *[style*="rgb(0, 128, 128)"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+  }
+
+  /* Ensure no product cards have teal backgrounds */
+  .broen-collection-wrapper .product-card,
+  .broen-collection-wrapper .card,
+  .broen-collection-wrapper .product-item {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Override any color scheme that might apply teal */
+  .broen-collection-wrapper .color-scheme-1,
+  .broen-collection-wrapper .color-scheme-2,
+  .broen-collection-wrapper .color-scheme-3 {
+    background: transparent !important;
+  }
+</style>
+
+{%- paginate collection.products by 24 -%}
+<div class="broen-collection-wrapper">
+  <!-- Header Section -->
+  <div class="broen-header">
+    <div class="broen-banner">
+      <h1>Different Smart Locks Built for Different Doors</h1>
+      <p>What kind of door do you have?</p>
+    </div>
+  </div>
+
+  <!-- Example of how to use the standard title - replace any teal elements with this -->
+  <!-- 
+  <h2 class="standard-title large">Engage Questions</h2>
+  <h3 class="standard-title medium">Product Categories</h3>
+  <h4 class="standard-title">Section Title</h4>
+  <h5 class="standard-title small gray">Subtitle</h5>
+  -->
+
+  <!-- Door Type Filter Section -->
+  <div class="door-filter-container">
+    <div class="door-filter-buttons">
+      {%- assign current_door_type = '' -%}
+      {%- for param in request.url -%}
+        {%- if param contains 'door_type=' -%}
+          {%- assign param_parts = param | split: 'door_type=' -%}
+          {%- if param_parts.size > 1 -%}
+            {%- assign current_door_type = param_parts[1] | split: '&' | first | url_decode -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      
+      {%- comment -%} Alternative method using search parameters {%- endcomment -%}
+      {%- unless current_door_type != blank -%}
+        {%- assign url_params = request.url | split: '?' -%}
+        {%- if url_params.size > 1 -%}
+          {%- assign query_string = url_params[1] -%}
+          {%- assign params = query_string | split: '&' -%}
+          {%- for param in params -%}
+            {%- if param contains 'door_type=' -%}
+              {%- assign current_door_type = param | split: '=' | last | url_decode -%}
+              {%- break -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      {%- endunless -%}
+      
+      {%- comment -%} Debug: Show current detected filter {%- endcomment -%}
+      <!-- Current filter detected: {{ current_door_type }} -->
+      
+      <!-- Enhanced filter buttons with data-door-type attributes -->
+      <a href="{{ collection.url }}" class="door-filter-btn{% if current_door_type == blank or current_door_type == '' %} active{% endif %}" data-door-type="all">All Doors</a>
+      <a href="{{ collection.url }}?door_type=main-door" class="door-filter-btn{% if current_door_type == 'main-door' %} active{% endif %}" data-door-type="main-door">Main Door</a>
+      <a href="{{ collection.url }}?door_type=outdoor" class="door-filter-btn{% if current_door_type == 'outdoor' %} active{% endif %}" data-door-type="outdoor">Outdoor (Waterproof)</a>
+      <a href="{{ collection.url }}?door_type=indoor" class="door-filter-btn{% if current_door_type == 'indoor' %} active{% endif %}" data-door-type="indoor">Indoor</a>
+      <a href="{{ collection.url }}?door_type=glass-door" class="door-filter-btn{% if current_door_type == 'glass-door' %} active{% endif %}" data-door-type="glass-door">Glass Door</a>
+      <a href="{{ collection.url }}?door_type=sliding-door" class="door-filter-btn{% if current_door_type == 'sliding-door' %} active{% endif %}" data-door-type="sliding-door">Sliding Door</a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="broen-main-content">
+    <!-- Product Count Section (Simplified) -->
+    <div class="product-count-section">
+      <div class="product-count">
+        {%- assign filtered_count = 0 -%}
+        {%- assign current_filter = '' -%}
+        
+        {%- comment -%} Extract door_type parameter from URL {%- endcomment -%}
+        {%- assign url_params = request.url | split: '?' -%}
+        {%- if url_params.size > 1 -%}
+          {%- assign query_string = url_params[1] -%}
+          {%- assign params = query_string | split: '&' -%}
+          {%- for param in params -%}
+            {%- if param contains 'door_type=' -%}
+              {%- assign current_filter = param | split: '=' | last | url_decode -%}
+              {%- break -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+        
+        {%- if current_filter == blank or current_filter == '' -%}
+          {%- assign filtered_count = collection.products.size -%}
+        {%- else -%}
+          {%- for product in collection.products -%}
+            {%- assign door_type = product.metafields.custom.door_type.value | default: 'main-door' -%}
+            {%- if door_type == current_filter -%}
+              {%- assign filtered_count = filtered_count | plus: 1 -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+        
+        <span id="product-count">{{ filtered_count }}</span> products
+      </div>
+    </div>
+
+    {%- if collection.products.size == 0 -%}
+      <div class="broen-empty-state">
+        <h2 style="color: rgba(255, 255, 255, 0.8); font-size: 2rem; margin-bottom: 1rem;">No products found</h2>
+        <p>Try adjusting your filters or browse all products.</p>
+      </div>
+    {%- else -%}
+      <!-- Product Grid -->
+      <div class="broen-product-grid" id="product-grid">
+        {%- assign current_filter = '' -%}
+        {%- assign url_params = request.url | split: '?' -%}
+        {%- if url_params.size > 1 -%}
+          {%- assign query_string = url_params[1] -%}
+          {%- assign params = query_string | split: '&' -%}
+          {%- for param in params -%}
+            {%- if param contains 'door_type=' -%}
+              {%- assign current_filter = param | split: '=' | last | url_decode -%}
+              {%- break -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+        
+        {%- for product in collection.products -%}
+          {%- assign door_type = product.metafields.custom.door_type.value | default: 'main-door' -%}
+          
+          {%- if current_filter == blank or current_filter == '' or door_type == current_filter -%}
+          <div class="broen-product-card" data-door-type="{{ door_type }}" data-product-id="{{ product.id }}">
+            <!-- Product Image -->
+            <div class="broen-product-image">
+              {%- if product.featured_media -%}
+                <img 
+                  src="{{ product.featured_media | image_url: width: 600 }}"
+                  alt="{{ product.featured_media.alt | escape }}"
+                  loading="lazy"
+                  width="600"
+                  height="600"
+                >
+              {%- else -%}
+                <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.3); font-size: 1rem;">
+                  No Image Available
+                </div>
+              {%- endif -%}
+            </div>
+
+            <!-- Product Content -->
+            <div class="broen-product-content">
+              <h3 class="broen-product-name">
+                <a href="{{ product.url }}">{{ product.title }}</a>
+              </h3>
+
+              <!-- Product Rating -->
+              <div class="broen-product-rating">
+                <div class="broen-stars">★★★★★</div>
+                <span class="broen-rating-count">
+                  {%- case forloop.index -%}
+                    {%- when 1 -%}(80)
+                    {%- when 2 -%}(95)
+                    {%- when 3 -%}(27)
+                    {%- when 4 -%}(55)
+                    {%- when 5 -%}(34)
+                    {%- when 6 -%}(37)
+                    {%- else -%}({{ 20 | plus: forloop.index | times: 2 }})
+                  {%- endcase -%}
+                </span>
+              </div>
+
+              <!-- Product Price -->
+              <div class="broen-product-price">
+                {%- if product.compare_at_price > product.price -%}
+                  <span class="compare-price">{{ product.compare_at_price | money }}</span>
+                {%- endif -%}
+                {{ product.price | money }}
+              </div>
+
+              <!-- Product Actions -->
+              <div class="broen-product-actions">
+                <form action="/cart/add" method="post" enctype="multipart/form-data" class="broen-add-to-cart-form">
+                  <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+                  <button type="submit" class="broen-btn primary">Add to Cart</button>
+                </form>
+                <a href="{{ product.url }}" class="broen-btn">View Details</a>
+              </div>
+            </div>
+          </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+
+      {%- if paginate.pages > 1 -%}
+        <div style="margin-top: 4rem;">
+          {% render 'pagination', paginate: paginate %}
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+</div>
+{%- endpaginate -%}
+
+<script>
+(function() {
+  // Enhanced add to cart functionality - keeping only cart functionality
+  function initializeAddToCart() {
+    const addToCartForms = document.querySelectorAll('.broen-add-to-cart-form');
+    
+    addToCartForms.forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const button = form.querySelector('button[type="submit"]');
+        const originalText = button.textContent;
+        
+        // Show loading state
+        button.textContent = 'Adding...';
+        button.classList.add('loading');
+        button.disabled = true;
+        
+        fetch('/cart/add.js', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Show success state
+          button.textContent = '✓ Added!';
+          button.classList.remove('loading');
+          button.classList.add('success');
+          
+          // Reset button after 3 seconds
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.disabled = false;
+            button.classList.remove('success');
+          }, 3000);
+          
+          // Trigger cart update event
+          document.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+        })
+        .catch(error => {
+          console.error('Error adding to cart:', error);
+          button.textContent = 'Error - Try Again';
+          button.classList.remove('loading');
+          button.classList.add('error');
+          
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.disabled = false;
+            button.classList.remove('error');
+          }, 3000);
+        });
+      });
+    });
+  }
+
+  // Enhanced filter button functionality with instant visual feedback
+  function initializeFilterButtons() {
+    const buttons = document.querySelectorAll('.door-filter-btn');
+    const params = new URLSearchParams(window.location.search);
+    const current = params.get('door_type') || 'all';
+
+    function setActive(type) {
+      buttons.forEach(b => b.classList.remove('active'));
+      const match = Array.from(buttons).find(b => b.dataset.doorType === type);
+      (match || Array.from(buttons).find(b => b.dataset.doorType === 'all'))?.classList.add('active');
+    }
+
+    // Set initial active state from URL
+    setActive(current);
+
+    // Instant visual feedback on click (keeps all buttons; user can re-choose)
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setActive(btn.dataset.doorType);
+        // Let the link navigate so Liquid filtering still applies
+      });
+    });
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeAddToCart();
+      initializeFilterButtons();
+    });
+  } else {
+    initializeAddToCart();
+    initializeFilterButtons();
+  }
+
+  // Re-initialize if needed (for dynamic content)
+  document.addEventListener('shopify:section:load', function() {
+    setTimeout(function() {
+      initializeAddToCart();
+      initializeFilterButtons();
+    }, 100);
+  });
+})();
+</script>

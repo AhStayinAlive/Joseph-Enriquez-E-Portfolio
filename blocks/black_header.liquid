@@ -1,0 +1,565 @@
+<!-- ======= AI Frosted Header v7.3 (Dark) — NO "L" OUTLINE + ACCESSIBLE FOCUS + HIGHER SOCIALS ======= -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ai-blur: 20px;
+    --ai-sat: 180%;
+    --ai-header-h: 76px;
+    --ai-page-blur: 12px;
+    --ai-scrollbar-pad: 0px; /* compensates cart shift when body is locked */
+
+    --ai-frost-overlay: rgba(0,0,0,.62);
+    --ai-frost-overlay-scrolled: rgba(0,0,0,.68);
+    --ai-drawer-overlay: rgba(0,0,0,.30);
+    --ai-drawer-panel-overlay: rgba(0,0,0,.40);
+
+    --ai-border: rgba(255,255,255,.20);
+    --ai-shadow: 0 8px 24px rgba(0,0,0,.30);
+    --ai-shadow-scrolled: 0 10px 28px rgba(0,0,0,.36);
+
+    --ai-page-width: 1200px;
+    --ai-pad-x: 24px;
+
+    --ai-logo-h: 28px;
+    --ai-brand-size: 20px;
+
+    --ai-nav-size: 13px;
+    --ai-nav-weight: 500;
+    --ai-nav-letter: .005em;
+
+    --ai-mobile-logo-h: 26px;
+    --sa-r: env(safe-area-inset-right, 0px);
+    --sa-l: env(safe-area-inset-left, 0px);
+    --sa-b: env(safe-area-inset-bottom, 0px); /* NEW */
+  }
+
+  /* Spacer below fixed header */
+  body::before{ content:""; display:block; height: var(--ai-header-h); }
+
+  #MainContent > .shopify-section:first-child,
+  .shopify-section-group-main > .shopify-section:first-child{ margin-top:0 !important; }
+
+  html, body{ scroll-padding-top: var(--ai-header-h); }
+
+  .ai-bundle, .ai-bundle *{
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    box-sizing: border-box;
+  }
+
+  .ai-header{
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 10050; isolation:isolate;
+    color:#fff;
+  }
+
+  .ai-header::before{
+    content:""; position:absolute; inset:0; z-index:0;
+    background: var(--ai-frost-overlay);
+    -webkit-backdrop-filter: saturate(var(--ai-sat)) blur(var(--ai-blur));
+    backdrop-filter: saturate(var(--ai-sat)) blur(var(--ai-blur));
+    border-bottom: 1px solid var(--ai-border);
+    box-shadow: var(--ai-shadow);
+    pointer-events:none; transition: background .18s ease, box-shadow .18s ease;
+    bottom: -1px; /* seam killer */
+  }
+  .ai-header.ai-scrolled::before{ background: var(--ai-frost-overlay-scrolled); box-shadow: var(--ai-shadow-scrolled); }
+
+  .ai-container{
+    position: relative; z-index:1;
+    max-width: var(--ai-page-width);
+    margin:0 auto;
+    /* safe area + scrollbar compensation so cart never shifts */
+    padding: 14px calc(var(--ai-pad-x) + 8px + var(--sa-r) + var(--ai-scrollbar-pad)) 12px calc(var(--ai-pad-x) + var(--sa-l));
+    display:flex; flex-direction:column; gap:15px;
+  }
+
+  .ai-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .ai-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+
+  .ai-btn{ background:none; border:0; color:inherit; padding:8px; border-radius:8px; cursor:pointer; position: relative; width: 38px; height: 38px; }
+  .ai-btn[data-ai-open]{ display:none; }
+
+  /* Animated hamburger ↔ X */
+  .ai-btn-hamburger, .ai-btn-close{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    transition: opacity 250ms cubic-bezier(0.25,0.46,0.45,0.94),
+                transform 250ms cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  .ai-btn-close{ opacity:0; transform:translate(-50%,-50%) rotate(-90deg) scale(0.8); }
+  .ai-btn-hamburger{ opacity:1; transform:translate(-50%,-50%) rotate(0deg) scale(1); }
+  .ai-btn[aria-expanded="true"] .ai-btn-hamburger{ opacity:0; transform:translate(-50%,-50%) rotate(90deg) scale(0.8); }
+  .ai-btn[aria-expanded="true"] .ai-btn-close{ opacity:1; transform:translate(-50%,-50%) rotate(0deg) scale(1); }
+
+  .ai-brand{ display:inline-flex; align-items:center; gap:.6ch; color:inherit; text-decoration:none; min-width:0; }
+  .ai-brand img{ height: var(--ai-logo-h); width:auto; display:block; }
+  .ai-brand-fallback{ font-size: var(--ai-brand-size); font-weight:700; letter-spacing:.02em; display:none; white-space:nowrap; }
+
+  /* actions padded by scrollbar width so cart icon never moves */
+  .ai-actions{ display:flex; align-items:center; gap:12px; padding-right: calc(4px + var(--sa-r) + var(--ai-scrollbar-pad)); }
+  .ai-cart{ position:relative; display:inline-flex; align-items:center; color:inherit; text-decoration:none; padding:8px 12px 8px 8px; border-radius:8px; }
+  .ai-cart-count{
+    position:absolute; top:-2px; right:0;
+    min-width:18px; height:18px;
+    background:#fff; color:#000; border-radius:999px;
+    font-size:12px; line-height:18px; text-align:center; font-weight:700;
+    box-shadow: 0 1px 2px rgba(0,0,0,.35);
+  }
+
+  .ai-nav-row{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .ai-link{
+    color: rgba(255,255,255,.92);
+    text-decoration:none;
+    font-size: var(--ai-nav-size);
+    font-weight: var(--ai-nav-weight);
+    letter-spacing: var(--ai-nav-letter);
+    line-height: 1.25;
+    padding:2px 0; border-radius:4px;
+    transition: opacity .15s ease;
+    opacity:.96;
+  }
+  .ai-link:hover{ opacity:1; }
+  .ai-link[aria-current="page"], .ai-link.is-active{
+    color:#fff;
+    text-decoration: underline;
+    text-underline-offset:.18em;
+    text-decoration-thickness: 1.6px;
+  }
+
+  @media (max-width: 768px){
+    .ai-container{ padding: 12px calc(var(--ai-pad-x) + 8px + var(--sa-r)) 12px calc(var(--ai-pad-x) + var(--sa-l)); gap:6px; }
+    .ai-btn[data-ai-open]{ display:inline-flex; }
+    .ai-brand img{ height: var(--ai-mobile-logo-h); }
+    .ai-brand-fallback{ font-size: 18px; }
+    .ai-nav-row{ display:none; }
+  }
+
+  /* Drawer base */
+  .ai-drawer{
+    position: fixed; inset:0; z-index:10060; color:#fff;
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition: opacity 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    top: var(--ai-header-h);
+    height: calc(100vh - var(--ai-header-h));
+  }
+
+  @media (max-width: 768px){
+    .ai-drawer[aria-hidden="false"]{ opacity:1; visibility:visible; pointer-events:auto; }
+
+    .ai-drawer-overlay{
+      position:absolute; inset:0;
+      background: var(--ai-drawer-overlay);
+      -webkit-backdrop-filter: saturate(var(--ai-sat)) blur(var(--ai-blur));
+      backdrop-filter: saturate(var(--ai-sat)) blur(var(--ai-blur));
+      opacity:0;
+      transition: opacity 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94) 50ms;
+    }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-overlay{ opacity:1; transition-delay:0ms; }
+
+    .ai-drawer-panel{
+      position:absolute; top:0; left:0; height:100%; width:min(86vw, 420px);
+      transform: translateX(-100%);
+      transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius:0 !important; /* rectangular panel */
+    }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-panel{ transform: translateX(0); }
+
+    .ai-drawer-panel::before{
+      content:""; position:absolute; pointer-events:none;
+      inset: -1px -1px -1px 0 !important; /* 1px bleed to kill seams */
+      background: var(--ai-drawer-panel-overlay);
+      -webkit-backdrop-filter: saturate(var(--ai-sat)) blur(var(--ai-blur));
+      backdrop-filter: saturate(var(--ai-sat)) blur(var(--ai-blur));
+      /* REMOVE the right border to kill the “L” */
+      border-right: 0 !important;
+      box-shadow:none; border-radius:0 !important;
+      transform: none; transition: none;
+    }
+
+    .ai-drawer-content{
+      position:relative; height:100%; padding:18px 20px 14px;
+      display:flex; flex-direction:column;
+      opacity:0; transform: translateY(8px);
+      transition: opacity 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94) 150ms,
+                  transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94) 150ms;
+    }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-content{ opacity:1; transform: translateY(0); transition-delay:100ms; }
+
+    .ai-drawer-scroll{ overflow:auto; padding-right:4px; }
+
+    .ai-drawer-nav a{
+      display:block; padding:12px 0; color:#fff; text-decoration:none; font-weight:500; letter-spacing:.005em;
+      opacity:0; transform: translateX(-12px);
+      transition: opacity 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      -webkit-tap-highlight-color: transparent;               /* no iOS corner flash */
+    }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-nav a{ opacity:1; transform: translateX(0); }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-nav a:nth-child(1){ transition-delay:150ms; }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-nav a:nth-child(2){ transition-delay:180ms; }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-nav a:nth-child(3){ transition-delay:210ms; }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-nav a:nth-child(4){ transition-delay:240ms; }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-nav a:nth-child(5){ transition-delay:270ms; }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-nav a:nth-child(6){ transition-delay:300ms; }
+
+    /* Accessible focus: underline instead of outline */
+    /* Fixed: Remove all focus outlines - only current page should have underline */
+    .ai-drawer-nav a:focus,
+    .ai-drawer-nav a:focus-visible{
+      outline: none !important;
+      box-shadow: none !important;
+      border: none !important;
+      /* No visual focus indicator - only current page gets underline */
+    }
+
+    /* Current page indicator - this should be the ONLY underline */
+    .ai-drawer-nav a[aria-current="page"]{
+      text-decoration: underline; 
+      text-underline-offset:.15em; 
+      text-decoration-thickness:1.6px;
+    }
+
+    /* Footer stays visible higher up (works well on iPhone 14 Pro) */
+    .ai-drawer-footer{
+      margin-top:auto;
+      padding-top:12px;
+      padding-bottom: calc(12px + var(--sa-b));
+      border-top:1px solid var(--ai-border);
+      position: sticky;
+      bottom: calc(14px + var(--sa-b)); /* lifts socials above the bottom edge */
+      background: transparent;
+      opacity:0; transform: translateY(8px);
+      transition: opacity 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94) 200ms,
+                  transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94) 200ms;
+    }
+    .ai-drawer[aria-hidden="false"] .ai-drawer-footer{ opacity:1; transform: translateY(0); transition-delay:150ms; }
+
+    .ai-socials{ display:flex; align-items:center; gap:16px; padding-top:10px; }
+    .ai-socials a{ display:inline-flex; align-items:center; color:#fff; text-decoration:none; opacity:.95; }
+    .ai-socials a:focus-visible{ outline:2px solid #fff; outline-offset:2px; border-radius:6px; }
+    .ai-socials svg{ width:20px; height:20px; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
+
+    /* seam fix — lift drawer 1px and extend height 2px */
+    .ai-drawer{
+      top: calc(var(--ai-header-h) - 1px);
+      height: calc(100vh - var(--ai-header-h) + 2px);
+    }
+
+    .ai-footer-logo{ margin-top:12px; }
+    .ai-footer-logo img{ height:18px; width:auto; display:block; opacity:.95; }
+
+    body.is-ai-drawer-open #MainContent,
+    body.is-ai-drawer-open .shopify-section-group-main,
+    body.is-ai-drawer-open .shopify-section{
+      will-change: filter; filter: blur(var(--ai-page-blur)) saturate(1.28) !important;
+      transition: filter 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    }
+    body.is-ai-drawer-open .ai-header{ filter:none !important; }
+  }
+
+  /* Hard-hide the drawer on desktop to prevent leaks during resize */
+  @media (min-width: 769px){
+    .ai-drawer{ display:none !important; }
+  }
+
+  @supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))){
+    .ai-header::before{ -webkit-backdrop-filter:none; backdrop-filter:none; background: rgba(0,0,0,.78); }
+    @media (max-width:768px){
+      .ai-drawer-overlay{ -webkit-backdrop-filter:none; backdrop-filter:none; background: rgba(0,0,0,.45); }
+      .ai-drawer-panel::before{ -webkit-backdrop-filter:none; backdrop-filter:none; background: rgba(0,0,0,.55); }
+      body::before{ height: calc(var(--ai-header-h) - 1px); }
+      .ai-header::before{ border-bottom:0 !important; box-shadow:none !important; }
+    }
+  }
+
+  .ai-btn, .ai-drawer-close{ border:0 !important; background:transparent !important; box-shadow:none !important; outline:none !important; -webkit-tap-highlight-color: transparent; }
+
+  /* Mobile gap fixes */
+  @media (max-width: 768px){
+    :root{ --ai-header-h: 70px; }
+    .ai-container{ padding: 12px calc(var(--ai-pad-x) + 8px + var(--sa-r)) 12px calc(var(--ai-pad-x) + var(--sa-l)); gap:4px !important; }
+    .ai-brand img{ height: var(--ai-mobile-logo-h); max-height:24px; }
+    .ai-btn{ padding:6px !important; width:34px; height:34px; }
+    html{ height: 100dvh; height: 100vh; }
+    body{ min-height: 100dvh; min-height: 100vh; position:relative; overscroll-behavior:none; -webkit-overflow-scrolling:touch; }
+    .ai-header{ top:0 !important; position:fixed; z-index:10050; }
+  }
+  @media (max-width: 768px) and (orientation: landscape){ :root{ --ai-header-h: 64px; } }
+  @supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px){
+      body::before{ height: calc(var(--ai-header-h) + 1px) !important; }
+      .ai-header{ position:fixed; transform: translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+    }
+  }
+  @media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm){
+    @media (max-width: 768px){ body::before{ height: calc(var(--ai-header-h) + 0.5px) !important; } }
+  }
+
+  body::before{ height: var(--ai-header-h) !important; min-height: 64px; }
+  .ai-header::before{ border-bottom:0 !important; box-shadow:none !important; border-radius:0 !important; }
+
+  #MainContent > .shopify-section:first-child,
+  .shopify-section-group-main > .shopify-section:first-child{
+    margin-top:0 !important; border-top:0 !important; padding-top:0 !important;
+  }
+</style>
+
+{%- assign ai_logo_file = 'Broen_Logo.png' -%}
+{%- assign ai_footer_logo_file = 'Broen_Logo.png' -%}
+
+<div class="ai-bundle" data-ai-bundle>
+  <header class="ai-header" role="banner" aria-label="Site header">
+    <div class="ai-container">
+      <div class="ai-top">
+        <div class="ai-left">
+          <!-- Animated burger ↔ X -->
+          <button class="ai-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ai-drawer" data-ai-open>
+            <svg class="ai-btn-hamburger" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            <svg class="ai-btn-close" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <a class="ai-brand" href="{{ routes.root_url | default: '/' }}" aria-label="{{ shop.name | default: 'Home' }}">
+            <img src="{{ ai_logo_file | file_url }}" alt="{{ shop.name | default: 'Logo' }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+            <span class="ai-brand-fallback">{{ shop.name | default: 'Broen' }}</span>
+          </a>
+        </div>
+
+        <div class="ai-actions">
+          <a class="ai-cart" href="{{ routes.cart_url | default: '/cart' }}" aria-label="Cart">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="8" cy="20" r="1"/><circle cx="19" cy="20" r="1"/><path d="M2 2h3l3 12a2 2 0 0 0 2 1.5h9.5a2 2 0 0 0 1.9-1.5L24 6H6"/>
+            </svg>
+            <span class="ai-cart-count">{{ cart.item_count | default: 0 }}</span>
+          </a>
+        </div>
+      </div>
+
+      <nav class="ai-nav-row" aria-label="Primary">
+        {%- assign _ai_menu = linklists['about-broen'] -%}
+        {%- if _ai_menu and _ai_menu.links.size > 0 -%}
+          {%- for l in _ai_menu.links -%}
+            <a class="ai-link{% if l.active %} is-active{% endif %}" href="{{ l.url }}"{% if l.active %} aria-current="page"{% endif %}>{{ l.title }}</a>
+          {%- endfor -%}
+        {%- else -%}
+          <a class="ai-link" href="{{ routes.all_products_collection_url | default: '/collections/all' }}">See All Products</a>
+          <a class="ai-link" href="/pages/contact">Contact The Team</a>
+        {%- endif -%}
+      </nav>
+    </div>
+  </header>
+
+  <div class="ai-drawer" id="ai-drawer" data-ai-drawer aria-hidden="true" role="dialog" aria-modal="true" aria-label="Main menu">
+    <div class="ai-drawer-overlay" data-ai-close></div>
+    <aside class="ai-drawer-panel" role="document">
+      <div class="ai-drawer-content">
+        <!-- no internal X (header button closes) -->
+        <div class="ai-drawer-scroll">
+          <nav class="ai-drawer-nav" aria-label="Mobile">
+            {%- if _ai_menu and _ai_menu.links.size > 0 -%}
+              {%- for l in _ai_menu.links -%}
+                <a href="{{ l.url }}"{% if l.active %} aria-current="page"{% endif %}>{{ l.title }}</a>
+              {%- endfor -%}
+            {%- else -%}
+              <a href="{{ routes.all_products_collection_url | default: '/collections/all' }}">See All Products</a>
+              <a href="/pages/contact">Contact The Team</a>
+            {%- endif -%}
+          </nav>
+        </div>
+
+        <div class="ai-drawer-footer">
+          <div class="ai-socials" aria-label="Social links">
+            {%- if settings.social_facebook_link != blank -%}
+              <a href="{{ settings.social_facebook_link }}" target="_blank" rel="noopener" aria-label="Facebook">
+                <svg viewBox="-1 -1 26 26"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3.5l.5-4H14V7a1 1 0 0 1 1-1h3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if settings.social_instagram_link != blank -%}
+              <a href="{{ settings.social_instagram_link }}" target="_blank" rel="noopener" aria-label="Instagram">
+                <svg viewBox="-1 -1 26 26"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if settings.social_tiktok_link != blank -%}
+              <a href="{{ settings.social_tiktok_link }}" target="_blank" rel="noopener" aria-label="TikTok">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 4v8.5a4 4 0 1 1-4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 6c1.8 2.1 3.9 3.2 6 3.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            {%- endif -%}
+            {%- if settings.social_youtube_link != blank -%}
+              <a href="{{ settings.social_youtube_link }}" target="_blank" rel="noopener" aria-label="YouTube">
+                <svg viewBox="-1 -1 26 26"><rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if settings.social_x_link != blank or settings.social_twitter_link != blank -%}
+              <a href="{{ settings.social_x_link | default: settings.social_twitter_link }}" target="_blank" rel="noopener" aria-label="X">
+                <svg viewBox="-1 -1 26 26"><path d="M3 3l18 18M18 3 6 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if settings.social_linkedin_link != blank -%}
+              <a href="{{ settings.social_linkedin_link }}" target="_blank" rel="noopener" aria-label="LinkedIn">
+                <svg viewBox="-1 -1 26 26"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11v5M8 8v.01M12 16v-5a2 2 0 1 1 4 0v5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              </a>
+            {%- endif -%}
+          </div>
+
+          <div class="ai-footer-logo">
+            <img src="{{ ai_footer_logo_file | file_url }}" alt="{{ shop.name | default: 'Logo' }}">
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  const bundle = document.querySelector('[data-ai-bundle]');
+  if(!bundle) return;
+
+  try { if (bundle.parentElement !== document.body) document.body.prepend(bundle); } catch(e){}
+
+  const header    = bundle.querySelector('.ai-header');
+  const container = bundle.querySelector('.ai-container');
+
+  function setHeaderHeight(){
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const rect = header.getBoundingClientRect();
+    let h = Math.round(rect.height || 76);
+    if (isMobile) { h = Math.max(64, Math.min(h, 72)); h = h + 0.5; } else { h = Math.max(72, h); }
+    h = Math.ceil(h);
+    document.documentElement.style.setProperty('--ai-header-h', h + 'px');
+  }
+
+  setHeaderHeight();
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(()=>{ setTimeout(setHeaderHeight,50); }); }
+  setTimeout(setHeaderHeight,100); setTimeout(setHeaderHeight,300); setTimeout(setHeaderHeight,1000);
+  window.addEventListener('orientationchange', ()=>{ setTimeout(setHeaderHeight,100); setTimeout(setHeaderHeight,500); }, {passive:true});
+  if (window.ResizeObserver){
+    const ro = new ResizeObserver(()=>{ if (window.matchMedia('(max-width: 768px)').matches){ clearTimeout(window.headerResizeTimeout); window.headerResizeTimeout = setTimeout(setHeaderHeight,50); } else { setHeaderHeight(); }});
+    ro.observe(container);
+  }
+  window.addEventListener('load', setHeaderHeight, {passive:true});
+  window.addEventListener('resize', setHeaderHeight, {passive:true});
+
+  function onScroll(){
+    (window.scrollY || document.documentElement.scrollTop || 0) > 6
+      ? header.classList.add('ai-scrolled')
+      : header.classList.remove('ai-scrolled');
+  }
+  onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
+
+  /* Drawer */
+  const drawer  = bundle.querySelector('[data-ai-drawer]');
+  const openBtn = bundle.querySelector('[data-ai-open]');
+  const overlay = bundle.querySelector('.ai-drawer-overlay');
+
+  const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+  // Scrollbar compensation so the cart doesn't shift
+  function setScrollbarPad(on){
+    const sw = on ? (window.innerWidth - document.documentElement.clientWidth) : 0;
+    document.documentElement.style.setProperty('--ai-scrollbar-pad', sw + 'px');
+  }
+
+  let lockY = 0;
+  function lockBody(on){
+    if (!isMobile()) return;
+    document.body.classList.toggle('is-ai-drawer-open', !!on);
+    setScrollbarPad(on);
+    if (on){
+      lockY = window.scrollY || 0;
+      document.body.style.position='fixed';
+      document.body.style.top = (-lockY) + 'px';
+      document.body.style.left='0'; document.body.style.right='0'; document.body.style.width='100%';
+    } else {
+      document.body.style.position=''; document.body.style.top='';
+      document.body.style.left=''; document.body.style.right=''; document.body.style.width='';
+      window.scrollTo(0, lockY);
+    }
+  }
+
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
+  let lastTrigger=null, keyHandler=null;
+  function trapFocus(container){
+    const t = Array.from(container.querySelectorAll(FOCUSABLE)).filter(el => !el.hasAttribute('disabled'));
+    const first = t[0] || container, last = t[t.length-1] || container;
+    first.focus();
+    keyHandler = (e)=>{
+      if (e.key !== 'Tab') return;
+      if (t.length === 0){ e.preventDefault(); return; }
+      if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    };
+    container.addEventListener('keydown', keyHandler);
+  }
+  function releaseFocus(container){ if (keyHandler){ container.removeEventListener('keydown', keyHandler); keyHandler=null; } }
+
+  function openDrawer(trigger){
+    if (!isMobile()) return;
+    lastTrigger = trigger || openBtn;
+    drawer.setAttribute('aria-hidden','false');
+    openBtn.setAttribute('aria-expanded','true');
+    openBtn.setAttribute('aria-label','Close menu');
+    lockBody(true);
+    setTimeout(()=>trapFocus(drawer),100);
+  }
+
+  function closeDrawer(){
+    drawer.setAttribute('aria-hidden','true');
+    releaseFocus(drawer);
+    lockBody(false);
+    openBtn.setAttribute('aria-expanded','false');
+    openBtn.setAttribute('aria-label','Open menu');
+    if (lastTrigger) lastTrigger.focus();
+  }
+
+  // Header button toggles open/close
+  openBtn && openBtn.addEventListener('click', () => {
+    if (drawer.getAttribute('aria-hidden') === 'false'){ closeDrawer(); }
+    else { openDrawer(openBtn); }
+  });
+
+  overlay && overlay.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.getAttribute('aria-hidden') === 'false'){ e.preventDefault(); closeDrawer(); } });
+
+  // Normalize external links
+  (function normalizeLinks(scope){
+    scope.querySelectorAll('a[href]').forEach(a=>{
+      try{ const u=new URL(a.getAttribute('href'), location.href); if(u.origin!==location.origin){ a.target='_blank'; a.rel=(a.rel? a.rel+' ': '')+'noopener noreferrer'; } }catch(_){}
+    });
+  })(bundle);
+
+  // Preserve overlay blur during same-origin navs started inside the drawer
+  drawer.addEventListener('click', (e)=>{
+    const a=e.target.closest('a[href]'); if(!a) return;
+    try{
+      const u=new URL(a.getAttribute('href'), location.href);
+      if(u.origin===location.origin && (!a.target || a.target.toLowerCase()==='_self')){
+        window.addEventListener('pagehide', ()=> lockBody(false), {once:true});
+      } else { closeDrawer(); }
+    }catch(_){ closeDrawer(); }
+  });
+
+  /* Auto-close & reset when leaving mobile */
+  const mq = window.matchMedia('(max-width: 768px)');
+  function resetFromMobile(){
+    if (drawer.getAttribute('aria-hidden') === 'false') drawer.setAttribute('aria-hidden','true');
+    openBtn.setAttribute('aria-expanded','false');
+    openBtn.setAttribute('aria-label','Open menu');
+    document.body.classList.remove('is-ai-drawer-open');
+    document.body.style.position=''; document.body.style.top='';
+    document.body.style.left=''; document.body.style.right=''; document.body.style.width='';
+    setScrollbarPad(false);
+  }
+  function syncDrawerToBreakpoint(e){ if (!e.matches) resetFromMobile(); }
+  mq.addEventListener('change', syncDrawerToBreakpoint);
+  syncDrawerToBreakpoint(mq);
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Black Header",
+  "presets":[ { "name":"Header" } ]
+}
+{% endschema %}

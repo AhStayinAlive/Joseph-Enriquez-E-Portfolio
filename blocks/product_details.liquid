@@ -1,0 +1,1070 @@
+{% assign section_id = block.id | replace: '_' , '' | downcase %}
+
+{% style %}
+/* Load chosen fonts INSIDE style so they don't print to the page */
+{%- if block.settings.heading_font != blank -%}
+  {{ block.settings.heading_font | font_face: font_display: 'swap' }}
+{%- endif -%}
+{%- if block.settings.ui_font != blank -%}
+  {{ block.settings.ui_font | font_face: font_display: 'swap' }}
+{%- endif -%}
+
+/* =========================================================
+   BROEN PRODUCT PAGE — COMPACT, ARROW/HEADER Z-INDEX FIX
+   ========================================================= */
+
+.broen-hero-{{ section_id }}{
+  --page-bg: {% if block.settings.page_background != blank %}{{ block.settings.page_background }}{% else %}#FFFFFF{% endif %};
+  --media-bg: {% if block.settings.media_background != blank %}{{ block.settings.media_background }}{% else %}#FFFFFF{% endif %};
+  --text: {% if block.settings.text_color != blank %}{{ block.settings.text_color }}{% else %}#000000{% endif %};
+  --muted: {% if block.settings.muted_text_color != blank %}{{ block.settings.muted_text_color }}{% else %}#6B7280{% endif %};
+  --border: {% if block.settings.border_color != blank %}{{ block.settings.border_color }}{% else %}#000000{% endif %};
+  --chip-bg: {% if block.settings.chip_background != blank %}{{ block.settings.chip_background }}{% else %}#222222{% endif %};
+  --chip-text: {% if block.settings.chip_text_color != blank %}{{ block.settings.chip_text_color }}{% else %}#FFFFFF{% endif %};
+  --focus: {% if block.settings.focus_color != blank %}{{ block.settings.focus_color }}{% else %}#000000{% endif %};
+
+  --cta-bg: {% if block.settings.cta_background != blank %}{{ block.settings.cta_background }}{% else %}#FFFFFF{% endif %};
+  --cta-text: {% if block.settings.cta_text_color != blank %}{{ block.settings.cta_text_color }}{% else %}#000000{% endif %};
+  --cta-hover: {% if block.settings.cta_hover_background != blank %}{{ block.settings.cta_hover_background }}{% else %}#F0F0F0{% endif %};
+  --messages-blue: #007AFF;
+
+  --lg-blur: 18px; --lg-saturate: 180%; --lg-border: hsla(0,0%,100%,.22); --lg-shadow: rgba(0,0,0,.25);
+  --radius: {% if block.settings.border_radius != blank %}{{ block.settings.border_radius }}px{% else %}20px{% endif %};
+  --page-pad: 24px;
+  --title-color: {% if block.settings.title_color != blank %}{{ block.settings.title_color }}{% else %}var(--text){% endif %};
+
+  background: var(--page-bg); color: var(--text);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display","SF Pro Text", system-ui, sans-serif;
+}
+
+.shopify-section:has(.broen-hero-{{ section_id }}){ overflow: visible; overflow-x: clip; }
+
+/* Ensure product content stays below header; rely on theme for header stickiness */
+
+/* Prevent any product sections from covering the header */
+.broen-hero-{{ section_id }} {
+  position: relative;
+  z-index: 1;
+}
+
+/* Layout */
+.broen-hero__container-{{ section_id }}{ max-width:1360px; margin:0 auto; padding:var(--page-pad); position:relative; z-index:0; }
+.broen-hero__grid-{{ section_id }}{
+  display:grid; grid-template-columns:minmax(440px,54%) minmax(360px,1fr);
+  gap:28px; align-items:center; min-height:86vh;
+}
+
+/* MEDIA — rounded, own stacking context, clip overflow so arrows don't bleed */
+.broen-hero__media-{{ section_id }}{
+  position: relative;
+  z-index: 1;                 /* lower than header (1000) */
+  isolation: isolate;         /* create local stacking context */
+}
+.broen-hero__carousel-wrapper-{{ section_id }}{
+  position: relative;
+  overflow: hidden;           /* important: clip arrows at edges */
+  border-radius: var(--radius);
+}
+.broen-hero__carousel-{{ section_id }}{
+  display:flex; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory;
+  scrollbar-width:none; -ms-overflow-style:none; scroll-behavior:smooth;
+}
+.broen-hero__carousel-{{ section_id }}::-webkit-scrollbar{ display:none; }
+
+.broen-hero__media-item-{{ section_id }}{
+  flex:0 0 100%; scroll-snap-align:start;
+  aspect-ratio:4/5; max-height:min(78vh,820px);
+  display:flex; align-items:center; justify-content:center;
+  background:var(--media-bg);
+  border-radius: var(--radius);
+  overflow:hidden;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 6px 22px rgba(0,0,0,.08);
+}
+.broen-hero__media-content-{{ section_id }}{ width:100%; height:100%; object-fit:cover; transition:transform .55s cubic-bezier(.25,.46,.45,.94); }
+.broen-hero__media-item-{{ section_id }}:hover img.broen-hero__media-content-{{ section_id }}{ transform:scale(1.02); }
+.broen-hero__media-{{ section_id }} video.broen-hero__media-content-{{ section_id }}{ object-fit:cover; width:100%; height:100%; pointer-events:none; }
+
+/* Arrows — keep them under header, inside wrapper */
+.broen-hero__nav-btn-{{ section_id }}{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; background:rgba(34,34,34,.9);
+  border:1px solid rgba(255,255,255,.15); border-radius:50%;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  z-index: 2 !important;      /* under header (1000), above media (1) */
+  transition:all .25s ease;
+  pointer-events:auto;
+}
+.broen-hero__nav-btn-{{ section_id }}--prev{ left:12px; } .broen-hero__nav-btn-{{ section_id }}--next{ right:12px; }
+.broen-hero__nav-btn-{{ section_id }}:hover{ background:rgba(0,0,0,.65); transform:translateY(-50%) scale(1.05); }
+.broen-hero__nav-btn-{{ section_id }} svg{ color:#fff; opacity:.9; }
+
+/* Pagination dots */
+.broen-hero__dots-{{ section_id }}{ display:flex; justify-content:center; gap:8px; margin-top:10px; }
+.broen-hero__dot-{{ section_id }}{
+  width:18px; height:6px; border-radius:9999px; border:none; cursor:pointer;
+  background: color-mix(in srgb, var(--text) 22%, transparent);
+  transition: width .25s ease, background .2s ease;
+}
+.broen-hero__dot-{{ section_id }}.active{ width:28px; background: var(--text); }
+
+/* DETAILS */
+.broen-hero__info-{{ section_id }}{ padding:0; position:sticky; top:var(--page-pad); z-index:0; }
+
+.broen-hero__head-{{ section_id }}{ display:block; }
+.broen-hero__title-{{ section_id }}{
+  font-size:clamp(22px, 2.6vw, 32px); font-weight:750; margin:0 0 6px;
+  letter-spacing:-.02em; line-height:1.2; color: var(--title-color) !important;
+  font-family: {% if block.settings.heading_font != blank %}"{{ block.settings.heading_font.family }}",{% endif %} -apple-system, BlinkMacSystemFont, "SF Pro Display","SF Pro Text", system-ui, sans-serif !important;
+}
+
+/* Solid (non-transparent) classification pill */
+.broen-hero__classification-{{ section_id }}{
+  font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.12em;
+  color: {{ block.settings.classification_text_color }}; 
+  background: {{ block.settings.classification_background }};
+  border: 1px solid {{ block.settings.classification_border }};
+  padding:6px 10px; border-radius:9999px; width:fit-content; margin:0 0 14px;
+}
+@media (max-width:767px){
+  .broen-hero__head-{{ section_id }}{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+  .broen-hero__classification-{{ section_id }}{ margin:0; }
+}
+
+.broen-hero__price-{{ section_id }}{
+  font-size: clamp(28px, 3.8vw, 42px) !important; /* desktop/tablet */
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  margin: 8px 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+/* Sections */
+.broen-hero__section-{{ section_id }}{ margin:10px 0; }
+.broen-hero__section-label-{{ section_id }}{
+  font-size:13px; font-weight:700; margin-bottom:8px;
+  font-family: {% if block.settings.ui_font != blank %}"{{ block.settings.ui_font.family }}",{% endif %} -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif !important;
+}
+
+/* COLOR — label outside */
+.broen-hero__colors-{{ section_id }}{ display:flex; gap:14px; flex-wrap:wrap; }
+.broen-hero__color-item-{{ section_id }}{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width:48px; }
+.broen-hero__color-{{ section_id }}{
+  width:40px; height:40px; border-radius:50%; border:2px solid rgba(0,0,0,.18); background:var(--chip-bg);
+  cursor:pointer; transition:all .25s ease; box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+.broen-hero__color-{{ section_id }}:hover{ transform:scale(1.08); box-shadow:0 4px 16px rgba(0,0,0,.16); }
+.broen-hero__color-{{ section_id }}.selected{ border-color:var(--text); transform:scale(1.12); }
+.broen-hero__color-label-{{ section_id }}{ font-size:11px; color:var(--muted); font-family: {% if block.settings.ui_font != blank %}"{{ block.settings.ui_font.family }}",{% endif %} -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif !important; }
+
+/* MORTISE — tiles with labels outside */
+.broen-hero__mortise-grid-{{ section_id }}{ display:flex; gap:14px; flex-wrap:wrap; }
+.broen-hero__mortise-item-{{ section_id }}{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.broen-hero__mortise-{{ section_id }}{
+  background:var(--chip-bg); color:var(--chip-text);
+  border:1px solid rgba(0,0,0,.18); border-radius:14px;
+  width:96px; height:96px; padding:6px; cursor:pointer; transition:all .25s ease; display:flex; align-items:center; justify-content:center;
+}
+.broen-hero__mortise-{{ section_id }}:hover{ transform:translateY(-2px); border-color:var(--text); }
+.broen-hero__mortise-{{ section_id }}.selected{ border-color:var(--text); box-shadow:0 8px 26px rgba(0,0,0,.28); }
+.broen-hero__mortise-label-{{ section_id }}{ font-size:11px; color:var(--muted); font-family: {% if block.settings.ui_font != blank %}"{{ block.settings.ui_font.family }}",{% endif %} -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif !important; }
+
+/* Description */
+.broen-hero__description-{{ section_id }}{ color:var(--muted); font-size:14px; line-height:1.6; max-width:56ch; }
+
+/* Buttons */
+.broen-hero__buttons-{{ section_id }}{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+.broen-hero__add-to-cart-{{ section_id }}{
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text","SF Pro Display", system-ui, sans-serif !important;
+  font-weight:600; font-size:16px !important; line-height:1; color:var(--cta-text) !important; min-height:46px;
+  display:inline-flex; align-items:center; justify-content:center; padding:16px 32px !important; border-radius:100px !important;
+  border:1px solid var(--lg-border) !important;
+  background:linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,.18)) !important, var(--cta-bg) !important; background-color:var(--cta-bg) !important;
+  backdrop-filter:saturate(var(--lg-saturate)) blur(var(--lg-blur)) !important; -webkit-backdrop-filter:saturate(var(--lg-saturate)) blur(var(--lg-blur)) !important;
+  box-shadow:0 6px 18px var(--lg-shadow), inset 0 1px 0 rgba(255,255,255,.12) !important; transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.broen-hero__add-to-cart-{{ section_id }}:hover:not(:disabled){
+  transform:translateY(-1px);
+  background:linear-gradient(0deg, rgba(255,255,255,.24), rgba(255,255,255,.24)) !important, var(--cta-hover) !important; background-color:var(--cta-hover) !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.14) !important;
+}
+.broen-hero__buy-now-{{ section_id }}{
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text","SF Pro Display", system-ui, sans-serif; font-weight:600; font-size:16px; line-height:1; color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:16px 32px; border-radius:100px; border:none;
+  background:#007AFF !important; background-color:#007AFF !important; box-shadow:0 4px 16px rgba(0,122,255,.30); transition:all .2s ease;
+}
+.broen-hero__buy-now-{{ section_id }}:hover:not(:disabled){ background:#0056CC !important; background-color:#0056CC !important; transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,122,255,.40); }
+.broen-hero__buy-now-{{ section_id }}:disabled{ background:#2a2a2a !important; color:#9a9a9a !important; cursor:not-allowed; box-shadow:none; }
+
+/* Specs link under buttons */
+.broen-hero__spec-link-{{ section_id }}{
+  display:inline-block; margin: 6px 0 0 0;
+  font-size: 13px; font-weight: 600; text-decoration: underline; color: var(--muted);
+  font-family: {% if block.settings.ui_font != blank %}"{{ block.settings.ui_font.family }}",{% endif %} -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif !important;
+}
+.broen-hero__spec-link-{{ section_id }}:hover{ color: var(--text); }
+
+/* Mobile: smaller media so options/buttons fit */
+@media (max-width: 767px){
+  .broen-hero__grid-{{ section_id }}{ grid-template-columns:1fr; gap:12px; min-height:auto; }
+  .broen-hero__section-{{ section_id }}{ margin:8px 0; }
+  .broen-hero__buttons-{{ section_id }}{ grid-template-columns:1fr; margin-top:8px; }
+  .broen-hero__media-item-{{ section_id }}{ aspect-ratio: 1 / 1; max-height: 42vh; }
+  .broen-hero__dots-{{ section_id }}{ margin-top:6px; }
+  .broen-hero__color-{{ section_id }}{ width:34px; height:34px; }
+  .broen-hero__mortise-{{ section_id }}{ width:84px; height:84px; }
+  .broen-hero__title-{{ section_id }}{ font-size:20px; }
+  .broen-hero__price-{{ section_id }}{
+    font-size: 28px !important;          /* boost on phones */
+  }
+}
+
+/* Hide arrows if one slide */
+.broen-hero__carousel-wrapper-{{ section_id }}.single-slide .broen-hero__nav-btn-{{ section_id }}{ display:none; }
+.broen-hero__head-{{ section_id }}{
+  display: flex !important;
+  align-items: baseline;
+  justify-content: space-between;   /* title left, pill right */
+  gap: 12px;
+  flex-wrap: wrap;                  /* if it gets tight, allow wrap */
+}
+.broen-hero__title-{{ section_id }}{
+  flex: 1 1 auto;                   /* lets the title take the row */
+  margin: 0 0 6px !important;
+}
+.broen-hero__classification-{{ section_id }}{
+  margin-left: auto !important;     /* pushes it to the far right */
+  white-space: nowrap;              /* keeps pill on one line */
+  align-self: center;
+}
+{% endstyle %}
+
+<section class="broen-hero-{{ section_id }}" {{ section.shopify_attributes }}>
+  <div class="broen-hero__container-{{ section_id }}">
+    <div class="broen-hero__grid-{{ section_id }}">
+      
+      <!-- MEDIA -->
+      <div class="broen-hero__media-{{ section_id }}">
+        <div class="broen-hero__carousel-wrapper-{{ section_id }}" id="carousel-wrapper-{{ section_id }}">
+          <div class="broen-hero__carousel-{{ section_id }}" id="carousel-{{ section_id }}">
+            <!-- slides populated by JS -->
+          </div>
+
+          <button class="broen-hero__nav-btn-{{ section_id }} broen-hero__nav-btn-{{ section_id }}--prev" id="prev-{{ section_id }}" aria-label="Previous image">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="broen-hero__nav-btn-{{ section_id }} broen-hero__nav-btn-{{ section_id }}--next" id="next-{{ section_id }}" aria-label="Next image">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="broen-hero__dots-{{ section_id }}" id="dots-{{ section_id }}"></div>
+      </div>
+
+      <!-- DETAILS -->
+      <div class="broen-hero__info-{{ section_id }}">
+        <div class="broen-hero__head-{{ section_id }}">
+          <h1 class="broen-hero__title-{{ section_id }}">{{ product.title | default: "Product name" }}</h1>
+          {% assign door_type = product.metafields.custom.door_type.value | default: product.metafields.custom.door_type %}
+          {% if door_type != blank %}
+            <span class="broen-hero__classification-{{ section_id }}">{{ door_type | replace: '-', ' ' | capitalize }}</span>
+          {% else %}
+            <span class="broen-hero__classification-{{ section_id }}">Door Classification</span>
+          {% endif %}
+        </div>
+
+        <div class="broen-hero__price-{{ section_id }}" id="price-{{ section_id }}">
+          {{ product.selected_or_first_available_variant.price | money | default: "Price" }}
+        </div>
+
+        <form action="/cart/add" method="post" enctype="multipart/form-data" id="product-form-{{ section_id }}">
+          <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}" id="variant-id-{{ section_id }}">
+
+          {%- assign color_option_index = nil -%}
+          {%- for option in product.options_with_values -%}
+            {%- assign name_lc = option.name | downcase -%}
+            {%- if name_lc contains 'color' or name_lc contains 'colour' -%}
+              {%- assign color_option_index = forloop.index0 -%}{%- break -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- assign color_values = '' | split: '' -%}
+          {%- if color_option_index != nil -%}
+            {%- assign color_values = product.options_with_values[color_option_index].values -%}
+          {%- elsif product.metafields.custom.color_swatches and product.metafields.custom.color_swatches.value -%}
+            {%- for c in product.metafields.custom.color_swatches.value -%}
+              {%- assign color_values = color_values | push: c.name | default: c -%}
+            {%- endfor -%}
+          {%- endif -%}
+
+          {% if color_values.size > 0 %}
+          <div class="broen-hero__section-{{ section_id }}">
+            <label class="broen-hero__section-label-{{ section_id }}">Color</label>
+            <div class="broen-hero__colors-{{ section_id }}" role="radiogroup" aria-label="Color options">
+              {% for color_value in color_values %}
+                {% assign meta_color = null %}
+                {% assign color_style = 'background-color: ' %}
+                {% assign has_color = false %}
+
+                {% if product.metafields.custom.color_swatches.value.size > 0 %}
+                  {% for meta in product.metafields.custom.color_swatches.value %}
+                    {% assign meta_name = meta.name | default: meta %}
+                    {% if meta_name == color_value %}
+                      {% assign meta_color = meta %}
+                      {% if meta.hex %}
+                        {% assign color_style = color_style | append: meta.hex | append: ';' %}
+                        {% assign has_color = true %}
+                      {% endif %}
+                      {% break %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+
+                {% unless has_color %}
+                  {% assign color_lower = color_value | downcase %}
+                  {% case color_lower %}
+                    {% when 'black' %}{% assign color_style = color_style | append: '#000000;' %}
+                    {% when 'white' %}{% assign color_style = color_style | append: '#ffffff;' %}
+                    {% when 'brown' %}{% assign color_style = color_style | append: '#8B4513;' %}
+                    {% when 'gray' or 'grey' %}{% assign color_style = color_style | append: '#808080;' %}
+                    {% when 'bronze' %}{% assign color_style = color_style | append: '#CD7F32;' %}
+                    {% when 'silver' %}{% assign color_style = color_style | append: '#C0C0C0;' %}
+                    {% when 'gold' %}{% assign color_style = color_style | append: '#FFD700;' %}
+                    {% else %}{% assign color_style = color_style | append: '#666666;' %}
+                  {% endcase %}
+                {% endunless %}
+
+                <div class="broen-hero__color-item-{{ section_id }}">
+                  <button
+                    type="button"
+                    class="broen-hero__color-{{ section_id }}{% if color_option_index != nil and color_value == product.selected_or_first_available_variant.options[color_option_index] %} selected{% endif %}"
+                    data-color-value="{{ color_value }}"
+                    aria-label="Color: {{ color_value }}"
+                    role="radio"
+                    tabindex="0"
+                    style="{{ color_style }}"
+                  >
+                    {% if meta_color and meta_color.image %}
+                      <img src="{{ meta_color.image | image_url: width: 48 }}" alt="{{ color_value }}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                    {% endif %}
+                  </button>
+                  <span class="broen-hero__color-label-{{ section_id }}">{{ color_value }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {%- assign mortise_option_index = nil -%}
+          {%- for option in product.options_with_values -%}
+            {%- assign name_lc = option.name | downcase -%}
+            {%- if name_lc contains 'mortise' or name_lc contains 'lock case' or name_lc contains 'locking' -%}
+              {%- assign mortise_option_index = forloop.index0 -%}{%- break -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- assign mortise_values = '' | split: '' -%}
+          {%- if mortise_option_index != nil -%}
+            {%- assign mortise_values = product.options_with_values[mortise_option_index].values -%}
+          {%- elsif product.metafields.custom.mortise_types and product.metafields.custom.mortise_types.value -%}
+            {%- for m in product.metafields.custom.mortise_types.value -%}
+              {%- assign mortise_values = mortise_values | push: m.name | default: m -%}
+            {%- endfor -%}
+          {%- endif -%}
+
+          {% if mortise_values.size > 0 %}
+          <div class="broen-hero__section-{{ section_id }}">
+            <label class="broen-hero__section-label-{{ section_id }}">Mortise (Lock Case)</label>
+            <div class="broen-hero__mortise-grid-{{ section_id }}" role="radiogroup" aria-label="Mortise type options">
+              {% for mortise_value in mortise_values %}
+                {% assign variant_image = null %}
+                {% if mortise_option_index != null %}
+                  {% for variant in product.variants %}
+                    {% if variant.options[mortise_option_index] == mortise_value and variant.featured_media %}
+                      {% assign variant_image = variant.featured_media %}
+                      {% break %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+
+                <div class="broen-hero__mortise-item-{{ section_id }}">
+                  <button
+                    type="button"
+                    class="broen-hero__mortise-{{ section_id }}{% if variant_image %} has-image{% endif %}{% if mortise_option_index != nil and mortise_value == product.selected_or_first_available_variant.options[mortise_option_index] %} selected{% endif %}"
+                    data-mortise-value="{{ mortise_value }}"
+                    aria-label="Mortise: {{ mortise_value }}"
+                    role="radio"
+                    tabindex="0"
+                  >
+                    {% if variant_image %}
+                      <img src="{{ variant_image | image_url: width: 120 }}" alt="{{ mortise_value }}" style="width:100%; height:100%; object-fit:cover; border-radius:10px;">
+                    {% else %}
+                      {{ mortise_value }}
+                    {% endif %}
+                  </button>
+                  <span class="broen-hero__mortise-label-{{ section_id }}">{{ mortise_value }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {%- assign short_desc = product.metafields.custom.short_description.value
+            | default: product.metafields.custom.short_description
+            | default: product.metafields.custom.product_blurb
+            | default: product.metafields.custom.key_points
+            | default: product.description -%}
+          {% if short_desc != blank %}
+            <div class="broen-hero__section-{{ section_id }}">
+              <div class="broen-hero__description-{{ section_id }}">{{ short_desc | newline_to_br }}</div>
+            </div>
+          {% endif %}
+
+          <!-- Actions -->
+          <div class="broen-hero__buttons-{{ section_id }}">
+            <button type="submit" class="broen-hero__add-to-cart-{{ section_id }}" id="add-to-cart-{{ section_id }}" {% unless product.available %}disabled{% endunless %}>
+              {% if product.available %}Add to Cart{% else %}Sold Out{% endif %}
+            </button>
+            <button type="button" class="broen-hero__buy-now-{{ section_id }}" id="buy-now-{{ section_id }}" {% unless product.available %}disabled{% endunless %}>
+              {% if product.available %}Buy Now{% else %}Sold Out{% endif %}
+            </button>
+          </div>
+
+          {%- comment -%} Specs link (metafield-first, fallback to setting) {%- endcomment -%}
+          {% assign specs_text = block.settings.specs_link_text | default: 'See full specifications' %}
+          {% assign specs_href = '' %}
+          {% if product.metafields.custom.specification != blank %}
+            {% assign specs_href = product.metafields.custom.specification | file_url %}
+          {% endif %}
+          {% if specs_href == '' and block.settings.specs_link_url != blank %}
+            {% assign specs_href = block.settings.specs_link_url %}
+          {% endif %}
+          {% if specs_href != '' %}
+            <a class="broen-hero__spec-link-{{ section_id }}"
+               href="{{ specs_href }}"
+               target="_blank" rel="noopener">
+              {{ specs_text }}
+            </a>
+          {% endif %}
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+(function() {
+  const sectionId = '{{ section_id }}';
+  const section = document.querySelector('.broen-hero-' + sectionId);
+
+  // Product data
+  const variants = {{ product.variants | json }};
+  const colorOptionIndex = {{ color_option_index | json }};
+  const mortiseOptionIndex = {{ mortise_option_index | json }};
+  const colorValues = {{ color_values | json }};
+  const heroVideoUrl = {{ product.metafields.custom.hero_video.value | default: product.metafields.custom.hero_video | json }};
+
+  // Build flat media list from product.media (we'll order/filter later)
+  const productMedia = [
+    {% for media in product.media limit: 8 %}
+      {% assign skip_image = false %}
+      {% assign alt_text = media.alt | downcase %}
+      {% if alt_text contains 'feature' or alt_text contains 'spec' or alt_text contains 'unlock' or alt_text contains 'way' or alt_text contains 'method' %}
+        {% assign skip_image = true %}
+      {% endif %}
+      {% unless skip_image %}
+      {
+        id: {{ media.id | json }},
+        type: {{ media.media_type | json }},
+        src: {{ media | image_url: width: 1200 | json }},
+        alt: {{ media.alt | default: product.title | escape | json }},
+        {% if media.media_type == 'video' %}
+        videoSrc: {{ media.sources[0].url | json }},
+        mimeType: {{ media.sources[0].mime_type | json }},
+        poster: {% if media.preview_image %}{{ media.preview_image | image_url: width: 800 | json }}{% else %}null{% endif %}
+        {% endif %}
+      },
+      {% endunless %}
+    {% endfor %}
+  ];
+
+  // DOM
+  const carousel = document.getElementById(`carousel-${sectionId}`);
+  const carouselWrapper = document.getElementById(`carousel-wrapper-${sectionId}`);
+  const dotsContainer = document.getElementById(`dots-${sectionId}`);
+  const prevBtn = document.getElementById(`prev-${sectionId}`);
+  const nextBtn = document.getElementById(`next-${sectionId}`);
+  const variantIdInput = document.getElementById(`variant-id-${sectionId}`);
+  const priceElement = document.getElementById(`price-${sectionId}`);
+  const addToCartButton = document.getElementById(`add-to-cart-${sectionId}`);
+  const buyNowButton = document.getElementById(`buy-now-${sectionId}`);
+
+  // State
+  let currentSlide = 0;
+  let totalSlides = 0;
+  let currentVariant = {{ product.selected_or_first_available_variant | json }};
+  let selectedColor = null;
+  let selectedMortise = null;
+
+  // ---- helpers --------------------------------------------------------------
+
+  function getOtherVariantMediaIds(currentVariantId){
+    const ids = new Set();
+    (variants || []).forEach(v => {
+      if (v && v.featured_media && v.featured_media.id && v.id !== currentVariantId) {
+        ids.add(v.featured_media.id);
+      }
+    });
+    return ids;
+  }
+
+  function createMediaSlide(media) {
+    const slide = document.createElement('div');
+    slide.className = `broen-hero__media-item-${sectionId}`;
+    slide.dataset.mediaId = media.id;
+
+    if (media.type === 'video') {
+      const video = document.createElement('video');
+      video.className = `broen-hero__media-content-${sectionId}`;
+      video.muted = true; video.loop = true; video.playsInline = true;
+      video.setAttribute('playsinline',''); video.autoplay = true; video.setAttribute('autoplay','');
+      video.preload = 'metadata';
+      if (media.poster) video.poster = media.poster;
+
+      const source = document.createElement('source');
+      source.src = media.videoSrc; source.type = media.mimeType;
+      video.appendChild(source);
+
+      slide.appendChild(video);
+    } else {
+      const img = document.createElement('img');
+      img.className = `broen-hero__media-content-${sectionId}`;
+      img.src = media.src; img.alt = media.alt || ''; img.loading = 'lazy';
+      slide.appendChild(img);
+    }
+    return slide;
+  }
+
+  function shouldIncludeMedia(media, otherVariantMediaIds) {
+    // videos handled separately as the hero video
+    if (media.type === 'video') return false;
+
+    // exclude featured images of other variants
+    if (otherVariantMediaIds.has(media.id)) {
+      if (!currentVariant || !currentVariant.featured_media || media.id !== currentVariant.featured_media.id) {
+        return false;
+      }
+    }
+
+    // color-aware filtering
+    const alt = (media.alt || '').toLowerCase();
+    const sel = (selectedColor || '').toLowerCase();
+
+    if (Array.isArray(colorValues) && colorValues.length > 0) {
+      const mentionsAnyColor = colorValues.some(cv => alt.includes(String(cv).toLowerCase()));
+      if (mentionsAnyColor) return sel ? alt.includes(sel) : false;
+    }
+    return true;
+  }
+
+  function setupCarouselNavigation() {
+    if (!carousel || !dotsContainer) return;
+
+    // hide if single slide
+    if (totalSlides < 2) {
+      if (prevBtn) prevBtn.style.display = 'none';
+      if (nextBtn) nextBtn.style.display = 'none';
+      dotsContainer.style.display = 'none';
+      return;
+    }
+
+    if (prevBtn) prevBtn.style.display = 'flex';
+    if (nextBtn) nextBtn.style.display = 'flex';
+    dotsContainer.style.display = 'flex';
+
+    dotsContainer.innerHTML = '';
+    for (let i = 0; i < totalSlides; i++) {
+      const dot = document.createElement('button');
+      dot.className = `broen-hero__dot-${sectionId}` + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', `Go to slide ${i + 1} of ${totalSlides}`);
+      dot.onclick = () => goToSlide(i);
+      dotsContainer.appendChild(dot);
+    }
+  }
+
+  function goToSlide(index) {
+    if (!carousel) return;
+    if (index < 0) index = totalSlides - 1;
+    if (index >= totalSlides) index = 0;
+
+    currentSlide = index;
+
+    const items = carousel.querySelectorAll(`.broen-hero__media-item-${sectionId}`);
+    if (items[index]) {
+      carousel.scrollTo({ left: items[index].offsetLeft, behavior: 'smooth' });
+      document.querySelectorAll(`.broen-hero__dot-${sectionId}`).forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+      manageVideoPlayback();
+    }
+  }
+
+  function manageVideoPlayback() {
+    if (!carousel) return;
+    const items = carousel.querySelectorAll(`.broen-hero__media-item-${sectionId}`);
+    items.forEach((item, idx) => {
+      const video = item.querySelector(`video.broen-hero__media-content-${sectionId}`);
+      if (!video) return;
+      if (idx === currentSlide) { try { video.play().catch(()=>{});} catch(e){} }
+      else { try { video.pause(); video.currentTime = 0; } catch(e){} }
+    });
+  }
+
+  function findVariant(colorValue, mortiseValue) {
+    return variants.find(variant => {
+      const colorMatch = colorOptionIndex === null || variant.options[colorOptionIndex] === colorValue;
+      const mortiseMatch = mortiseOptionIndex === null || variant.options[mortiseOptionIndex] === mortiseValue;
+      return colorMatch && mortiseMatch;
+    });
+  }
+
+  function rebuildCarousel() {
+    if (!carousel) return;
+
+    const otherVariantMediaIds = getOtherVariantMediaIds(currentVariant ? currentVariant.id : null);
+
+    carousel.innerHTML = '';
+    const slides = [];
+    const used = new Set();
+
+    // 1) selected variant image first
+    if (currentVariant && currentVariant.featured_media && currentVariant.featured_media.id) {
+      const featured = productMedia.find(m => m.id === currentVariant.featured_media.id);
+      if (featured) {
+        slides.push(createMediaSlide(featured));
+        used.add(featured.id);
+      }
+    }
+
+    // 2) hero video (if any)
+    if (heroVideoUrl && !used.has('hero-video')) {
+      slides.push(createMediaSlide({
+        id: 'hero-video',
+        type: 'video',
+        videoSrc: heroVideoUrl,
+        mimeType: 'video/mp4',
+        poster: null,
+        alt: 'Hero Video'
+      }));
+      used.add('hero-video');
+    }
+
+    // 3) rest of product images (filtered)
+    productMedia.forEach(m => {
+      if (m.type === 'video') return;
+      if (!shouldIncludeMedia(m, otherVariantMediaIds)) return;
+      if (!used.has(m.id)) {
+        slides.push(createMediaSlide(m));
+        used.add(m.id);
+      }
+    });
+
+    if (slides.length === 0) {
+      const ph = document.createElement('div');
+      ph.className = `broen-hero__media-item-${sectionId}`;
+      ph.innerHTML = `<div class="broen-hero__placeholder-${sectionId}">1</div>`;
+      slides.push(ph);
+    }
+
+    slides.forEach(s => carousel.appendChild(s));
+    totalSlides = slides.length;
+    currentSlide = 0;
+    carousel.scrollTo({ left: 0, behavior: 'auto' });
+
+    setupCarouselNavigation();
+    if (carouselWrapper) {
+      carouselWrapper.classList.toggle('single-slide', totalSlides < 2);
+    }
+    manageVideoPlayback();
+  }
+
+  function updateVariantSelection(newVariant) {
+    if (!newVariant) return;
+
+    currentVariant = newVariant;
+
+    if (variantIdInput) variantIdInput.value = newVariant.id;
+
+    // PHP currency for your store UI
+    if (priceElement) {
+      const formatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+      priceElement.textContent = formatter.format(newVariant.price / 100);
+    }
+
+    if (addToCartButton) {
+      addToCartButton.disabled = !newVariant.available;
+      addToCartButton.textContent = newVariant.available ? 'Add to Cart' : 'Sold Out';
+    }
+    if (buyNowButton) {
+      buyNowButton.disabled = !newVariant.available;
+      buyNowButton.textContent = newVariant.available ? 'Buy Now' : 'Sold Out';
+    }
+
+    const url = new URL(window.location);
+    url.searchParams.set('variant', newVariant.id);
+    history.replaceState(null, '', url);
+
+    rebuildCarousel();
+
+    if (dotsContainer) {
+      const dots = dotsContainer.querySelectorAll(`.broen-hero__dot-${sectionId}`);
+      dots.forEach((d, i) => d.classList.toggle('active', i === 0));
+    }
+
+    if (section) {
+      try { section.dispatchEvent(new CustomEvent('variant:change', { detail: { variant: newVariant } })); }
+      catch(e){ console.log(e); }
+    }
+  }
+
+  function initColorSelection() {
+    const colorContainer = document.querySelector(`.broen-hero__colors-${sectionId}`);
+    if (!colorContainer) return;
+
+    // initial state from current variant
+    if (currentVariant && colorOptionIndex !== null && currentVariant.options[colorOptionIndex]) {
+      selectedColor = currentVariant.options[colorOptionIndex];
+    }
+
+    const btns = colorContainer.querySelectorAll(`.broen-hero__color-${sectionId}`);
+    btns.forEach(btn => {
+      const val = btn.dataset.colorValue;
+      const isSel = val === selectedColor;
+      btn.classList.toggle('selected', isSel);
+      btn.setAttribute('aria-checked', isSel ? 'true' : 'false');
+    });
+
+    colorContainer.addEventListener('click', (e) => {
+      const colorBtn = e.target.closest(`.broen-hero__color-${sectionId}`);
+      if (!colorBtn || colorBtn.disabled || colorBtn.getAttribute('aria-disabled') === 'true') return;
+      e.preventDefault();
+
+      btns.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-checked','false'); });
+      colorBtn.classList.add('selected'); colorBtn.setAttribute('aria-checked','true');
+
+      selectedColor = colorBtn.dataset.colorValue;
+      const newVariant = findVariant(selectedColor, selectedMortise);
+      if (newVariant) updateVariantSelection(newVariant);
+    });
+
+    colorContainer.addEventListener('keydown', (e) => {
+      const colors = Array.from(btns);
+      const idx = colors.indexOf(e.target);
+      let ni = idx;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); ni = idx > 0 ? idx - 1 : colors.length - 1; }
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); ni = idx < colors.length - 1 ? idx + 1 : 0; }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); return; }
+      colors[ni]?.focus();
+    });
+  }
+
+  function initMortiseSelection() {
+    const mortiseContainer = document.querySelector(`.broen-hero__mortise-grid-${sectionId}`);
+    if (!mortiseContainer) return;
+
+    // initial state from current variant
+    if (currentVariant && mortiseOptionIndex !== null && currentVariant.options[mortiseOptionIndex]) {
+      selectedMortise = currentVariant.options[mortiseOptionIndex];
+    }
+
+    const btns = mortiseContainer.querySelectorAll(`.broen-hero__mortise-${sectionId}`);
+    btns.forEach(btn => {
+      const val = btn.dataset.mortiseValue;
+      const isSel = val === selectedMortise;
+      btn.classList.toggle('selected', isSel);
+      btn.setAttribute('aria-checked', isSel ? 'true' : 'false');
+    });
+
+    mortiseContainer.addEventListener('click', (e) => {
+      const mortiseBtn = e.target.closest(`.broen-hero__mortise-${sectionId}`);
+      if (!mortiseBtn || mortiseBtn.disabled || mortiseBtn.getAttribute('aria-disabled') === 'true') return;
+      e.preventDefault();
+
+      btns.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-checked','false'); });
+      mortiseBtn.classList.add('selected'); mortiseBtn.setAttribute('aria-checked','true');
+
+      selectedMortise = mortiseBtn.dataset.mortiseValue;
+      const newVariant = findVariant(selectedColor, selectedMortise);
+      if (newVariant) updateVariantSelection(newVariant);
+    });
+
+    mortiseContainer.addEventListener('keydown', (e) => {
+      const ms = Array.from(btns);
+      const idx = ms.indexOf(e.target);
+      let ni = idx;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); ni = idx > 0 ? idx - 1 : ms.length - 1; }
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); ni = idx < ms.length - 1 ? idx + 1 : 0; }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); return; }
+      ms[ni]?.focus();
+    });
+  }
+
+  function initCarouselControls() {
+    if (prevBtn) prevBtn.onclick = (e) => { e.preventDefault(); goToSlide(currentSlide - 1); };
+    if (nextBtn) nextBtn.onclick = (e) => { e.preventDefault(); goToSlide(currentSlide + 1); };
+
+    if (carousel) {
+      carousel.addEventListener('scroll', () => {
+        const items = carousel.querySelectorAll(`.broen-hero__media-item-${sectionId}`);
+        if (!items.length) return;
+        const w = items[0].offsetWidth;
+        const newIdx = Math.round(carousel.scrollLeft / w);
+        if (newIdx !== currentSlide && newIdx >= 0 && newIdx < totalSlides) {
+          currentSlide = newIdx;
+          document.querySelectorAll(`.broen-hero__dot-${sectionId}`).forEach((dot, i) => {
+            dot.classList.toggle('active', i === currentSlide);
+          });
+          manageVideoPlayback();
+        }
+      }, { passive: true });
+
+      let startX = 0, dragging = false;
+      carousel.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; dragging = true; }, { passive: true });
+      carousel.addEventListener('touchend', (e) => {
+        if (!dragging) return; dragging = false;
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) goToSlide(currentSlide + (diff > 0 ? 1 : -1));
+      }, { passive: true });
+
+      carousel.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); goToSlide(currentSlide - 1); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); goToSlide(currentSlide + 1); }
+      });
+    }
+  }
+
+  function initButtons() {
+    const form = document.getElementById(`product-form-${sectionId}`);
+
+    if (form && addToCartButton) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const original = addToCartButton.textContent;
+
+        addToCartButton.textContent = 'Adding...';
+        addToCartButton.disabled = true;
+
+        fetch('/cart/add.js', { method: 'POST', body: formData })
+          .then(r => r.json())
+          .then(data => {
+            addToCartButton.textContent = 'Added!';
+            document.dispatchEvent(new CustomEvent('cart:item-added', { detail: { variant: data } }));
+            setTimeout(() => { addToCartButton.textContent = original; addToCartButton.disabled = false; }, 2000);
+          })
+          .catch(() => {
+            addToCartButton.textContent = 'Error - Try again';
+            setTimeout(() => { addToCartButton.textContent = original; addToCartButton.disabled = false; }, 2000);
+          });
+      });
+    }
+
+    if (buyNowButton) {
+      buyNowButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!currentVariant || !currentVariant.available) return;
+
+        const original = this.textContent;
+        this.textContent = 'Processing...';
+        this.disabled = true;
+
+        const fd = new FormData();
+        fd.append('id', currentVariant.id);
+        fd.append('quantity', '1');
+
+        fetch('/cart/add.js', { method: 'POST', body: fd })
+          .then(r => r.json())
+          .then(() => { window.location.href = '/checkout'; })
+          .catch(() => {
+            this.textContent = 'Error - Try again';
+            setTimeout(() => { this.textContent = original; this.disabled = false; }, 2000);
+          });
+      });
+    }
+  }
+
+  function initializeFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const variantId = urlParams.get('variant');
+    if (variantId) {
+      const variant = variants.find(v => String(v.id) === String(variantId));
+      if (variant) {
+        currentVariant = variant;
+        if (colorOptionIndex !== null) selectedColor = variant.options[colorOptionIndex];
+        if (mortiseOptionIndex !== null) selectedMortise = variant.options[mortiseOptionIndex];
+      }
+    } else {
+      if (currentVariant) {
+        if (colorOptionIndex !== null) selectedColor = currentVariant.options[colorOptionIndex];
+        if (mortiseOptionIndex !== null) selectedMortise = currentVariant.options[mortiseOptionIndex];
+      }
+    }
+  }
+
+  function init() {
+    initializeFromURL();
+    rebuildCarousel();
+    initColorSelection();
+    initMortiseSelection();
+    initCarouselControls();
+    initButtons();
+    manageVideoPlayback();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Broen Product Page",
+  "settings": [
+    { "type": "header", "content": "Core Colors" },
+    {
+      "type": "color",
+      "id": "page_background",
+      "label": "Page background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "media_background",
+      "label": "Media background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Primary text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_text_color",
+      "label": "Muted text",
+      "default": "#6B7280"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border color (base; alpha applied in CSS)",
+      "default": "#000000"
+    },
+
+    { "type": "header", "content": "Classification Pill" },
+    {
+      "type": "color",
+      "id": "classification_text_color",
+      "label": "Pill text",
+      "default": "#7A5A37"
+    },
+    {
+      "type": "color",
+      "id": "classification_background",
+      "label": "Pill background (base; alpha applied in CSS)",
+      "default": "#7A5A37"
+    },
+    {
+      "type": "color",
+      "id": "classification_border",
+      "label": "Pill border (base; alpha applied in CSS)",
+      "default": "#7A5A37"
+    },
+
+    { "type": "header", "content": "Interactive Elements" },
+    {
+      "type": "color",
+      "id": "chip_background",
+      "label": "Chip background",
+      "default": "#222222"
+    },
+    {
+      "type": "color",
+      "id": "chip_text_color",
+      "label": "Chip text",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "focus_color",
+      "label": "Focus outline",
+      "default": "#000000"
+    },
+
+    { "type": "header", "content": "Call-to-Action" },
+    {
+      "type": "color",
+      "id": "cta_background",
+      "label": "Add to Cart background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "cta_text_color",
+      "label": "Add to Cart text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "cta_hover_background",
+      "label": "Add to Cart hover",
+      "default": "#F0F0F0"
+    },
+
+    { "type": "header", "content": "Typography" },
+    {
+      "type": "font_picker",
+      "id": "heading_font",
+      "label": "Heading font (Product name)",
+      "default": "helvetica_n4"
+    },
+    {
+      "type": "font_picker",
+      "id": "ui_font",
+      "label": "UI font (labels & option captions)",
+      "default": "helvetica_n4"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Product name color",
+      "default": "#000000"
+    },
+
+    { "type": "header", "content": "Layout" },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Media border radius",
+      "min": 8, "max": 32, "step": 2, "default": 20, "unit": "px"
+    },
+
+    { "type": "header", "content": "Specifications link" },
+    {
+      "type": "text",
+      "id": "specs_link_url",
+      "label": "Specifications link (URL or #anchor)",
+      "default": "#specifications",
+      "info": "Accepts anchors (e.g., #specifications), relative (/pages/specs), or full URLs."
+    },
+    {
+      "type": "text",
+      "id": "specs_link_text",
+      "label": "Specifications link text",
+      "default": "See full specifications"
+    }
+  ],
+  "presets": [{ "name": "Broen Product Page" }]
+}
+{% endschema %}

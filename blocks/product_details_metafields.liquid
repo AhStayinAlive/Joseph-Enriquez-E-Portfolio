@@ -1,0 +1,1197 @@
+{% comment %}
+Product Metafield Carousel — SMOOTH+ (desktop infinite w/ main-card; mobile finite)
+- Desktop: one-card steps, centered main card, seamless infinite (uses clones on desktop only when >4 cards)
+- Mobile: native scroll + snap, finite (no clones), equal side padding; vertical scroll pass-through
+- Videos: only play on active card after settle
+{% endcomment %}
+
+{% assign carousel_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  /* ===== Root ===== */
+  .product-metafield-carousel-{{ carousel_id }}{
+    display:block; width:100%;
+    background: var(--page-bg) !important;
+    color: var(--text) !important;
+    position:relative;
+    padding-top:var(--pt); padding-bottom:var(--pb);
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    outline: none;
+  }
+
+  /* Container */
+  .carousel-container-{{ carousel_id }}{
+    width:100%;
+    margin:0 auto;
+    padding:0 20px;
+    position:relative;
+    z-index:1;
+    max-width: var(--content-w);
+  }
+
+  .carousel-section-{{ carousel_id }}{
+    padding:var(--inner) 0;
+    border-bottom:1px solid var(--border) !important;
+  }
+  .carousel-section-{{ carousel_id }}:last-child{ border-bottom:none; }
+
+  .section-title-{{ carousel_id }}{
+    color:var(--section-heading-color) !important;
+    font-size:clamp(calc(var(--heading-size) - 8px),4vw,var(--heading-size)) !important;
+    font-weight:700; margin:0 0 var(--heading-space);
+    letter-spacing:-.02em; line-height:1.1;
+    position:relative;
+    text-align: {{ block.settings.section_heading_align | default: 'center' }} !important;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .section-title-{{ carousel_id }}::after{
+    content:''; position:absolute; bottom:-20px; left:50%; transform:translateX(-50%);
+    width:80px; height:2px;
+    background:linear-gradient(90deg,transparent,var(--section-heading-color-alpha),transparent);
+  }
+
+  /* ===== Horizontal carousels ===== */
+  .horizontal-carousel-{{ carousel_id }}{
+    position:relative; margin:0;
+    padding:calc(var(--inner)*0.7) 0 calc(var(--inner)*1.6);
+    overflow:hidden; /* keeps page from getting a horizontal scrollbar */
+  }
+
+  /* Track wrapper */
+  .carousel-track-container-{{ carousel_id }}{
+    position:relative;
+    overflow:visible;
+    margin:0 auto;
+    border-radius:0;
+    max-width: var(--content-w);
+    background:transparent;
+  }
+  .carousel-track-{{ carousel_id }}{
+    display:flex; gap:var(--gap);
+    transition:transform .6s cubic-bezier(.16,1,.3,1);
+    will-change:transform;
+    padding:0 var(--edge-gutter);
+    align-items:center;
+    transform: translate3d(0,0,0);
+  }
+
+  /* ===== Cards ===== */
+  .carousel-card-{{ carousel_id }}{
+    flex:0 0 auto; width:var(--card-w); min-width:var(--card-w); height:var(--card-h);
+    background:var(--card-bg) !important;
+    border-radius:var(--radius) !important;
+    box-shadow:0 10px 40px rgba(0,0,0,.3);
+    transition:transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1);
+    display:flex; flex-direction:column; text-decoration:none;
+    transform-origin:center; backface-visibility:hidden;
+    position:relative; z-index:1; overflow:hidden;
+    contain: layout paint style;
+  }
+  .card-media-{{ carousel_id }}{
+    position:absolute; inset:0;
+    background:var(--media-bg) !important; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:var(--radius);
+  }
+  .card-media-{{ carousel_id }} img,
+  .card-media-{{ carousel_id }} video{
+    width:100%; height:100%; object-fit:cover; border-radius:var(--radius);
+    transition:transform .3s cubic-bezier(.16,1,.3,1);
+  }
+
+  /* Desktop hover niceties (non-main) */
+  @media (hover: hover) and (pointer: fine){
+    .carousel-card-{{ carousel_id }}:not(.main-card):hover{
+      transform: translateY(-4px);
+      box-shadow:0 16px 48px rgba(0,0,0,.35);
+    }
+  }
+
+  /* === MAIN CARD (desktop only) === */
+  @media (min-width:769px){
+    .product-metafield-carousel-{{ carousel_id }} .carousel-card-{{ carousel_id }}.main-card,
+    .product-metafield-carousel-{{ carousel_id }} .carousel-card-{{ carousel_id }}.main-card:hover,
+    .product-metafield-carousel-{{ carousel_id }} .carousel-card-{{ carousel_id }}.main-card:focus,
+    .product-metafield-carousel-{{ carousel_id }} .carousel-card-{{ carousel_id }}.main-card:active{
+      transform: translateY(-8px) scale(1.02) !important;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4) !important;
+      z-index: 5 !important;
+    }
+  }
+
+  /* Top-left text */
+  .card-content-{{ carousel_id }}{
+    position:absolute; top:0; left:0; right:0; bottom:auto;
+    padding:16px 20px;
+    z-index:3; color:var(--card-title-color); pointer-events:none; text-align:left;
+  }
+  .card-title-{{ carousel_id }}{
+    margin:0 0 4px; color:var(--card-title-color) !important; font-size:24px !important; font-weight:600 !important;
+    letter-spacing:-.03em !important; line-height:1.2 !important;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .card-subtext-{{ carousel_id }}{
+    margin:0; color:var(--card-description-color) !important; font-size:17px !important; line-height:1.4 !important;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+
+  /* Arrows (desktop) */
+  .carousel-navigation-{{ carousel_id }}{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:44px; height:44px; border-radius:50%;
+    background:rgba(255,255,255,.9) !important;
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border:none; color:#000 !important; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .2s ease; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,.15);
+    opacity:1 !important; visibility:visible !important;
+  }
+  .carousel-navigation-{{ carousel_id }}:hover{
+    transform:translateY(-50%) scale(1.1);
+    background:#fff !important; box-shadow:0 6px 20px rgba(0,0,0,.2);
+  }
+  .carousel-navigation--prev-{{ carousel_id }}{ left:20px; }
+  .carousel-navigation--next-{{ carousel_id }}{ right:20px; }
+  .carousel-navigation-{{ carousel_id }} svg{ width:24px; height:24px; stroke-width:2; stroke:#000; }
+
+  /* Dots — pill-style */
+  .clients-like-pagination-{{ carousel_id }}{
+    display:flex !important;
+    justify-content:center; align-items:center; gap:8px;
+    margin-top:32px; pointer-events:auto;
+  }
+  .clients-like-dot-{{ carousel_id }}{
+    width:18px; height:6px; border-radius:9999px; border:none; cursor:pointer; padding:0; outline:none;
+    background:var(--dot); transition:width .25s ease, background .2s ease, transform .25s ease;
+  }
+  .clients-like-dot-{{ carousel_id }}.active{ width:28px; background:var(--dot-active); }
+
+  /* HOW IT WORKS card (unchanged) */
+  .featured-video-{{ carousel_id }}{ display:flex; justify-content:center; align-items:center; min-height:calc(var(--how-card-h) + var(--inner)); padding:calc(var(--inner) * 0.5) 0 var(--inner); }
+  .video-card-{{ carousel_id }}{
+    width:100%; max-width:var(--how-card-w);
+    background:var(--how-card-bg) !important; border-radius:var(--how-radius) !important;
+    box-shadow:0 20px 60px rgba(0,0,0,.4); transition:transform .3s cubic-bezier(.16,1,.3,1); overflow:hidden;
+  }
+  .video-card-{{ carousel_id }}:hover{ transform:translateY(-8px) scale(1.02); }
+  .video-media-{{ carousel_id }}{ position:relative; width:100%; height:var(--how-media-h); background:var(--media-bg) !important; overflow:hidden; }
+  .video-media-{{ carousel_id }} video{ width:100%; height:100%; object-fit:cover; }
+  .video-content-{{ carousel_id }}{ padding:24px; text-align:var(--how-align); }
+  .video-title-{{ carousel_id }}{ margin:0 0 8px; color:var(--title-color) !important; font-size:28px !important; font-weight:600 !important; letter-spacing:-.03em; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .video-subtext-{{ carousel_id }}{ color:var(--sub-color) !important; margin:0 0 16px; font-size:17px !important; line-height:1.4; opacity:.9; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .download-button-{{ carousel_id }}{ display:inline-flex; gap:8px; align-items:center; font-weight:500; color:var(--how-cta-color) !important; text-decoration:none; font-size:17px; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif; transition:opacity .2s ease; }
+  .download-button-{{ carousel_id }}:hover{ opacity:.7; }
+
+  /* Mobile */
+  @media (max-width:768px){
+    .carousel-navigation-{{ carousel_id }}{ display:none !important; }
+    .carousel-track-container-{{ carousel_id }}{
+      overflow-x:auto; overflow-y:hidden;
+      scroll-snap-type:x mandatory; scrollbar-width:none; -ms-overflow-style:none;
+      padding:56px var(--mobile-edge, calc((100% - var(--m-card-w)) / 2));
+      overscroll-behavior-x:contain; scroll-behavior:smooth;
+      touch-action:auto; /* allow vertical gestures */
+    }
+    .carousel-track-container-{{ carousel_id }}::-webkit-scrollbar{ display:none; }
+    .carousel-track-{{ carousel_id }}{ gap:16px; padding:0; }
+    .carousel-card-{{ carousel_id }}{ scroll-snap-align:center; width:var(--m-card-w); min-width:var(--m-card-w); height:var(--m-card-h); }
+    .card-title-{{ carousel_id }}{ font-size:20px !important; }
+    .card-subtext-{{ carousel_id }}{ font-size:15px !important; }
+  }
+
+  /* Reduced motion / animation guard */
+  .product-metafield-carousel-{{ carousel_id }}.is-animating .carousel-card-{{ carousel_id }},
+  .product-metafield-carousel-{{ carousel_id }}.is-animating .card-media-{{ carousel_id }} img,
+  .product-metafield-carousel-{{ carousel_id }}.is-animating .card-media-{{ carousel_id }} video{
+    transition:none !important; transform:none !important;
+  }
+{% endstyle %}
+
+{%- liquid
+  assign content_bg_alpha = block.settings.content_bg_opacity | default: 0 | times: 0.01
+-%}
+{% capture css_vars_inline %}
+--page-bg: {{ block.settings.background_color | default: '#000000' }};
+--card-bg: {{ block.settings.card_background | default: '#111111' }};
+--media-bg: {{ block.settings.media_background | default: '#1a1a1a' }};
+
+--text: {{ block.settings.text_color | default: '#ffffff' }};
+--muted: {{ block.settings.muted_text_color | default: '#999999' }};
+--title-color: {{ block.settings.card_title_color | default: block.settings.text_color | default: '#ffffff' }};
+--sub-color: {{ block.settings.card_sub_color | default: block.settings.muted_text_color | default: '#999999' }};
+--section-heading-color: {{ block.settings.section_heading_color | default: block.settings.text_color | default: '#ffffff' }};
+--section-heading-color-alpha: {{ block.settings.section_heading_color | default: block.settings.text_color | default: '#ffffff' | color_modify: 'alpha', 0.8 }};
+--section-heading-color-alpha-25: {{ block.settings.section_heading_color | default: block.settings.text_color | default: '#ffffff' | color_modify: 'alpha', 0.25 }};
+
+--card-title-color: {{ block.settings.card_title_color | default: '#ffffff' }};
+--card-description-color: {{ block.settings.card_description_color | default: 'rgba(255,255,255,0.9)' }};
+
+--card-w: {{ block.settings.card_width | default: 320 }}px;
+--card-h: {{ block.settings.card_height | default: 480 }}px;
+--radius: {{ block.settings.border_radius | default: 20 }}px;
+--gap: {{ block.settings.card_gap | default: 24 }}px;
+
+--m-card-w: {{ block.settings.mobile_card_width | default: 280 }}px;
+--m-card-h: {{ block.settings.mobile_card_height | default: 400 }}px;
+
+--pt: {{ block.settings.section_padding_top | default: 80 }}px;
+--pb: {{ block.settings.section_padding_bottom | default: 80 }}px;
+--inner: {{ block.settings.section_inner_spacing | default: 40 }}px;
+--heading-space: {{ block.settings.heading_spacing | default: 60 }}px;
+
+--border: {{ block.settings.border_color | default: '#ffffff' | color_modify: 'alpha', 0.12 }};
+--focus: {{ block.settings.focus_color | default: '#ffffff' }};
+
+--content-w: {% if block.settings.full_bleed %}100%{% else %}{{ block.settings.content_max_width | default: 1280 }}px{% endif %};
+
+--how-card-w: {{ block.settings.how_card_max_w | default: 560 }}px;
+--how-card-h: {{ block.settings.how_card_max_w | default: 560 }}px;
+--how-media-h: {{ block.settings.how_media_h | default: 520 }}px;
+--how-card-bg: {{ block.settings.how_card_bg | default: '#0b0b0b' }};
+--how-radius: {{ block.settings.how_card_radius | default: 24 }}px;
+--how-align: {{ block.settings.how_text_align | default: 'center' }};
+--how-cta-color: {{ block.settings.how_link_color | default: '#ffffff' }};
+--heading-size: {{ block.settings.heading_font_size | default: 48 }}px;
+
+/* Dots */
+--dot: {{ block.settings.pagination_dot_color | default: '#ffffff' }};
+--dot-active: {{ block.settings.pagination_dot_active_color | default: '#ffffff' }} ;
+
+/* Side gutter for track (desktop) */
+--edge-gutter: 32px;
+{% endcapture %}
+
+<product-metafield-carousel-{{ carousel_id }}
+  class="product-metafield-carousel-{{ carousel_id }}"
+  {{ block.shopify_attributes }}
+  data-show-dots="true"
+  data-show-arrows="true"
+  data-hero-mode="autoplay"
+  data-carousel-mode="autoplay"
+  data-debug="false"
+  style="{{ css_vars_inline | strip_newlines }}"
+>
+  <div class="carousel-container-{{ carousel_id }}">
+
+    {%- comment -%} ABOUT THE PRODUCT {%- endcomment -%}
+    {% liquid
+      assign about_items = nil
+      assign about_card_count = 0
+      if product and product.metafields.custom.about_the_product
+        assign about_items = product.metafields.custom.about_the_product.value
+        if about_items
+          for item in about_items
+            assign about_card_count = about_card_count | plus: 1
+          endfor
+        endif
+      endif
+    %}
+    <section class="carousel-section-{{ carousel_id }}">
+      <h2 class="section-title-{{ carousel_id }}">{{ block.settings.about_heading | default: 'About the Product' }}</h2>
+
+      {% if about_card_count > 0 %}
+        <div class="horizontal-carousel-{{ carousel_id }}">
+          <div class="carousel-track-container-{{ carousel_id }}">
+            <div class="carousel-track-{{ carousel_id }}" data-section="about">
+              {% for feature_card in about_items %}
+                {% liquid
+                  assign item_title = feature_card.feature | default: feature_card.title | default: 'Feature'
+                  assign item_description = feature_card.description | default: ''
+                  assign poster_url = nil
+                  assign mp4_url = nil
+                  assign webm_url = nil
+
+                  if feature_card.media and feature_card.media.value != blank
+                    assign media_val = feature_card.media.value
+                    for m in media_val
+                      assign p = nil
+                      if m.preview_image
+                        assign p = m.preview_image | image_url: width: 1200
+                      endif
+                      if p == nil and m.image
+                        assign p = m.image | image_url: width: 1200
+                      endif
+
+                      if m.media_type == 'video' and m.sources and m.sources.size > 0
+                        for s in m.sources
+                          if s.mime_type and s.mime_type contains 'mp4'
+                            assign mp4_url = s.url
+                          elsif s.mime_type and s.mime_type contains 'webm'
+                            assign webm_url = s.url
+                          endif
+                        endfor
+                      elsif m.url
+                        assign url_lc = m.url | downcase
+                        if url_lc contains '.mp4' or url_lc contains '.m4v' or url_lc contains '.mov'
+                          assign mp4_url = m.url
+                        elsif url_lc contains '.webm'
+                          assign webm_url = m.url
+                        endif
+                      endif
+
+                      if poster_url == nil and p
+                        assign poster_url = p
+                      endif
+
+                      if mp4_url or webm_url
+                        break
+                      endif
+                    endfor
+                  endif
+
+                  if mp4_url == nil and webm_url == nil and feature_card.image and feature_card.image.value != blank
+                    assign poster_url = feature_card.image.value | image_url: width: 1200
+                  endif
+                %}
+
+                <div class="carousel-card-{{ carousel_id }}" role="group" aria-label="{{ item_title | escape }}" tabindex="0">
+                  <div class="card-media-{{ carousel_id }}">
+                    {% if mp4_url or webm_url %}
+                      <video {% if poster_url %}poster="{{ poster_url }}"{% endif %} muted playsinline webkit-playsinline loop preload="metadata" width="600" height="400">
+                        {% if webm_url %}<source src="{{ webm_url }}" type="video/webm">{% endif %}
+                        {% if mp4_url  %}<source src="{{ mp4_url  }}" type="video/mp4">{% endif %}
+                      </video>
+                    {% elsif poster_url %}
+                      <img src="{{ poster_url }}" alt="{{ item_title | escape }}" loading="lazy" width="600" height="400">
+                    {% else %}
+                      <div class="card-placeholder-{{ carousel_id }}">{{ forloop.index }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="card-content-{{ carousel_id }}">
+                    {% if block.settings.show_card_title and item_title != blank %}
+                      <h3 class="card-title-{{ carousel_id }}">{{ item_title }}</h3>
+                    {% endif %}
+                    {% if block.settings.show_card_description and item_description != blank %}
+                      <p class="card-subtext-{{ carousel_id }}">{{ item_description | truncate: 100 }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            {% if about_card_count > 1 %}
+              <button class="carousel-navigation-{{ carousel_id }} carousel-navigation--prev-{{ carousel_id }}" aria-label="Previous about slide" data-section="about" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18L9 12L15 6"/></svg>
+              </button>
+              <button class="carousel-navigation-{{ carousel_id }} carousel-navigation--next-{{ carousel_id }}" aria-label="Next about slide" data-section="about" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18L15 12L9 6"/></svg>
+              </button>
+            {% endif %}
+          </div>
+
+          <div class="clients-like-pagination-{{ carousel_id }}" data-section="about" role="tablist"></div>
+        </div>
+      {% else %}
+        <div class="empty-state-{{ carousel_id }}"><h3>About the Product</h3><p>Add feature cards to the "about_the_product" metafield</p></div>
+      {% endif %}
+    </section>
+
+    {%- comment -%} HOW IT WORKS {%- endcomment -%}
+    {% liquid
+      assign hero_mp4 = nil
+      assign hero_webm = nil
+      assign hero_poster = nil
+
+      if product and product.metafields.custom.how_it_works_video
+        assign how_it_works_video = product.metafields.custom.how_it_works_video
+
+        if how_it_works_video.url
+          assign hero_mp4 = how_it_works_video.url
+        endif
+
+        if hero_mp4 == nil and how_it_works_video.sources
+          for source in how_it_works_video.sources
+            if source.url
+              if source.mime_type contains 'mp4' or source.url contains '.mp4'
+                assign hero_mp4 = source.url
+              elsif source.mime_type contains 'webm' or source.url contains '.webm'
+                assign hero_webm = source.url
+              elsif hero_mp4 == nil
+                assign hero_mp4 = source.url
+              endif
+            endif
+          endfor
+        endif
+
+        if hero_mp4 == nil and how_it_works_video.value
+          assign hv = how_it_works_video.value
+          if hv.url
+            assign hero_mp4 = hv.url
+          elsif hv.sources
+            for source in hv.sources
+              if source.url
+                if source.mime_type contains 'mp4' or source.url contains '.mp4'
+                  assign hero_mp4 = source.url
+                elsif source.mime_type contains 'webm' or source.url contains '.webm'
+                  assign hero_webm = source.url
+                elsif hero_mp4 == nil
+                  assign hero_mp4 = source.url
+                endif
+              endif
+            endfor
+          endif
+        endif
+
+        if how_it_works_video.preview_image
+          assign hero_poster = how_it_works_video.preview_image | image_url: width: 800
+        elsif how_it_works_video.value and how_it_works_video.value.preview_image
+          assign hero_poster = how_it_works_video.value.preview_image | image_url: width: 800
+        endif
+      endif
+
+      assign manual_file = nil
+      if product and product.metafields.custom.manual
+        assign m = product.metafields.custom.manual
+        if m.value and m.value.url
+          assign manual_file = m.value.url
+        elsif m.url
+          assign manual_file = m.url
+        elsif m.value
+          assign manual_file = m.value
+        else
+          assign manual_file = m
+        endif
+      endif
+    %}
+
+    <section class="carousel-section-{{ carousel_id }}">
+      <h2 class="section-title-{{ carousel_id }}">{{ block.settings.how_it_works_heading | default: 'How It Works' }}</h2>
+      <div class="featured-video-{{ carousel_id }}">
+        <div class="video-card-{{ carousel_id }}">
+          <div class="video-media-{{ carousel_id }}">
+            {% if hero_mp4 or hero_webm %}
+              <video {% if hero_poster %}poster="{{ hero_poster }}"{% endif %} muted playsinline webkit-playsinline loop autoplay preload="metadata" width="800" height="1200" id="hero-video-{{ carousel_id }}">
+                {% if hero_webm %}<source src="{{ hero_webm }}" type="video/webm">{% endif %}
+                {% if hero_mp4  %}<source src="{{ hero_mp4  }}" type="video/mp4">{% endif %}
+              </video>
+            {% else %}
+              <div class="video-placeholder-{{ carousel_id }}">🎬</div>
+            {% endif %}
+          </div>
+          <div class="video-content-{{ carousel_id }}">
+            <h3 class="video-title-{{ carousel_id }}">{{ block.settings.video_title | default: 'How It Works' }}</h3>
+            <p class="video-subtext-{{ carousel_id }}">{{ block.settings.video_description | default: 'Watch our step-by-step process in action' }}</p>
+            {% if manual_file %}
+              <a href="{{ manual_file }}" class="download-button-{{ carousel_id }}" download rel="noopener" target="_blank">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                {{ block.settings.how_link_label | default: 'Download Manual (PDF)' }}
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {%- comment -%} AFTER SALES SERVICE {%- endcomment -%}
+    {% liquid
+      assign service_items = nil
+      assign service_card_count = 0
+      if product and product.metafields.custom.after_sales_service
+        assign service_items = product.metafields.custom.after_sales_service.value
+        if service_items
+          for item in service_items
+            assign service_card_count = service_card_count | plus: 1
+          endfor
+        endif
+      endif
+    %}
+    <section class="carousel-section-{{ carousel_id }}">
+      <h2 class="section-title-{{ carousel_id }}">{{ block.settings.after_sales_heading | default: 'After Sales Service' }}</h2>
+
+      {% if service_card_count > 0 %}
+        <div class="horizontal-carousel-{{ carousel_id }}">
+          <div class="carousel-track-container-{{ carousel_id }}">
+            <div class="carousel-track-{{ carousel_id }}" data-section="service">
+              {% for service_card in service_items %}
+                {% liquid
+                  assign item_title = service_card.title | default: service_card.feature | default: 'Service'
+                  assign item_description = service_card.description | default: ''
+                  assign poster_url = nil
+                  assign mp4_url = nil
+                  assign webm_url = nil
+
+                  if service_card.media_files and service_card.media_files.value != blank
+                    assign media_val = service_card.media_files.value
+                    for m in media_val
+                      assign p = nil
+                      if m.preview_image
+                        assign p = m.preview_image | image_url: width: 1200
+                      endif
+                      if p == nil and m.image
+                        assign p = m.image | image_url: width: 1200
+                      endif
+
+                      if m.media_type == 'video' and m.sources and m.sources.size > 0
+                        for s in m.sources
+                          if s.mime_type and s.mime_type contains 'mp4'
+                            assign mp4_url = s.url
+                          elsif s.mime_type and s.mime_type contains 'webm'
+                            assign webm_url = s.url
+                          endif
+                        endfor
+                      elsif m.url
+                        assign url_lc = m.url | downcase
+                        if url_lc contains '.mp4' or url_lc contains '.m4v' or url_lc contains '.mov'
+                          assign mp4_url = m.url
+                        elsif url_lc contains '.webm'
+                          assign webm_url = m.url
+                        endif
+                      endif
+
+                      if poster_url == nil and p
+                        assign poster_url = p
+                      endif
+
+                      if mp4_url or webm_url
+                        break
+                      endif
+                    endfor
+                  endif
+
+                  if mp4_url == nil and webm_url == nil and service_card.image and service_card.image.value != blank
+                    assign poster_url = service_card.image.value | image_url: width: 1200
+                  endif
+                %}
+
+                <div class="carousel-card-{{ carousel_id }}" role="group" aria-label="{{ item_title | escape }}" tabindex="0">
+                  <div class="card-media-{{ carousel_id }}">
+                    {% if mp4_url or webm_url %}
+                      <video {% if poster_url %}poster="{{ poster_url }}"{% endif %} muted playsinline webkit-playsinline loop preload="metadata" width="600" height="400">
+                        {% if webm_url %}<source src="{{ webm_url }}" type="video/webm">{% endif %}
+                        {% if mp4_url  %}<source src="{{ mp4_url  }}" type="video/mp4">{% endif %}
+                      </video>
+                    {% elsif poster_url %}
+                      <img src="{{ poster_url }}" alt="{{ item_title | escape }}" loading="lazy" width="600" height="400">
+                    {% else %}
+                      <div class="card-placeholder-{{ carousel_id }}">{{ forloop.index }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="card-content-{{ carousel_id }}">
+                    {% if block.settings.show_card_title and item_title != blank %}
+                      <h3 class="card-title-{{ carousel_id }}">{{ item_title }}</h3>
+                    {% endif %}
+                    {% if block.settings.show_card_description and item_description != blank %}
+                      <p class="card-subtext-{{ carousel_id }}">{{ item_description | truncate: 100 }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            {% if service_card_count > 1 %}
+              <button class="carousel-navigation-{{ carousel_id }} carousel-navigation--prev-{{ carousel_id }}" aria-label="Previous service slide" data-section="service" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18L9 12L15 6"/></svg>
+              </button>
+              <button class="carousel-navigation-{{ carousel_id }} carousel-navigation--next-{{ carousel_id }}" aria-label="Next service slide" data-section="service" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18L15 12L9 6"/></svg>
+              </button>
+            {% endif %}
+          </div>
+
+          <div class="clients-like-pagination-{{ carousel_id }}" data-section="service" role="tablist"></div>
+        </div>
+      {% else %}
+        <div class="empty-state-{{ carousel_id }}"><h3>After Sales Service</h3><p>Add service cards to the "after_sales_service" metafield</p></div>
+      {% endif %}
+    </section>
+
+  </div>
+</product-metafield-carousel-{{ carousel_id }}>
+
+<script>
+/* Product Metafield Carousel — SMOOTH+ (desktop infinite only when >4 cards; mobile finite)
+   - Desktop: one-card steps, centered main card, seamless infinite via clones ONLY when >4 cards
+   - Mobile: native scroll + snap (no clones)
+   - Videos: only play the active item
+*/
+(function(){
+  const tagName = 'product-metafield-carousel-{{ carousel_id }}';
+  if (customElements.get(tagName)) return;
+
+  class SmoothMetaCarousel extends HTMLElement{
+    constructor(){
+      super();
+      this.isDesktop = window.innerWidth >= 768;
+      this.carousels = {};
+      this._resizeAttached = false;
+      this.bound = new WeakMap();
+    }
+
+    /* ==== helpers ==== */
+    clamp(n, min, max){ return Math.min(max, Math.max(min, n)); }
+
+    /* Balance finite tracks so gutters are equal (e.g., 3 cards -> left|center|right) */
+    balanceTrack(section){
+      const c = this.carousels[section]; if (!c) return;
+
+      // Only balance in desktop finite mode (no clones)
+      if (!this.isDesktop || c.cloned){
+        c.track.style.paddingLeft = '';
+        c.track.style.paddingRight = '';
+        const stylesReset = getComputedStyle(c.track);
+        c.padLeft = parseFloat(stylesReset.paddingLeft) || 0;
+        return;
+      }
+
+      const styles = getComputedStyle(c.track);
+      const defaultPad = parseFloat(styles.paddingLeft) || 0; // --edge-gutter
+      const containerW = c.container.clientWidth;
+      const contentW   = c.count * c.cardWidth + (c.count - 1) * c.gap;
+
+      const extra = Math.max(0, (containerW - contentW) / 2);
+      const pad   = Math.max(defaultPad, extra);
+
+      c.track.style.paddingLeft  = pad + 'px';
+      c.track.style.paddingRight = pad + 'px';
+      c.padLeft = pad;
+    }
+
+    connectedCallback(){ this.init(); }
+
+    init(){
+      ['about','service'].forEach(section => this.setupSection(section));
+      this.setupGlobalHandlers();
+      setTimeout(()=>this.recenterAll(false), 200);
+      window.addEventListener('load', ()=>this.recenterAll(false), { once:true });
+    }
+
+    /* ===== Init per section ===== */
+    setupSection(section){
+      const track   = this.querySelector(`.carousel-track-{{ carousel_id }}[data-section="${section}"]`);
+      const container = track?.closest(`.carousel-track-container-{{ carousel_id }}`);
+      const prevBtn = container?.querySelector(`.carousel-navigation--prev-{{ carousel_id }}[data-section="${section}"]`);
+      const nextBtn = container?.querySelector(`.carousel-navigation--next-{{ carousel_id }}[data-section="${section}"]`);
+      const dotsBox = this.querySelector(`.clients-like-pagination-{{ carousel_id }}[data-section="${section}"]`);
+      if (!track || !container) return;
+
+      const originals = Array.from(track.children);
+      const count = originals.length;
+      if (!count) return;
+
+      const styles = getComputedStyle(track);
+      const gap = parseFloat(styles.gap || styles.columnGap || '{{ block.settings.card_gap | default: 24 }}') || {{ block.settings.card_gap | default: 24 }};
+      const padLeft = parseFloat(styles.paddingLeft) || 0;
+      const cardWidth = (originals[0]?.offsetWidth) || {{ block.settings.card_width | default: 320 }};
+
+      const c = this.carousels[section] = {
+        section, track, container, prevBtn, nextBtn, dotsBox,
+        originals, count, gap, padLeft, cardWidth,
+        cloned:false, base:0,
+        currentIndex:0, normIndex:0,
+        mIndex:0, isProgrammatic:false, progTO:null, _afterTO:null
+      };
+
+      // Finite mode (≤4) starts centered
+      if (count <= 4 && count > 1){
+        const centerIndex = Math.floor((count - 1) / 2);
+        c.normIndex = centerIndex;
+        c.currentIndex = centerIndex;
+        c.mIndex = centerIndex;
+      }
+
+      // Build clones only when >4 cards on desktop
+      if (this.isDesktop && count > 4) this.buildDesktopClones(section);
+
+      this.buildDots(section);
+      prevBtn?.addEventListener('click', e=>{ e.preventDefault(); this.prev(section); });
+      nextBtn?.addEventListener('click', e=>{ e.preventDefault(); this.next(section); });
+
+      this.setupMobileScrollTracking(section);
+      this.recomputeLayout(section);
+      this.center(section, false);
+      this.updateNav(section);
+      this.bindVideos(section);
+      this.updateVideoPlayback(section);
+    }
+
+    /* ===== Desktop clones for seamless infinite (only when >4 cards) ===== */
+    buildDesktopClones(section){
+      const c = this.carousels[section]; 
+      if (!c || c.cloned || c.count <= 4) return; // only clone if >4
+      const fragLeft = document.createDocumentFragment();
+      const fragRight = document.createDocumentFragment();
+      c.originals.forEach(node=>{
+        const clone = node.cloneNode(true);
+        clone.setAttribute('data-clone','left');
+        fragLeft.appendChild(clone);
+      });
+      c.originals.forEach(node=>{
+        const clone = node.cloneNode(true);
+        clone.setAttribute('data-clone','right');
+        fragRight.appendChild(clone);
+      });
+      c.track.prepend(fragLeft);
+      c.track.append(fragRight);
+      c.cloned = true;
+      c.base = c.count;                 // originals start after left clones
+      c.currentIndex = c.base + c.normIndex;
+      this.bindVideos(section);         // bind videos on clones too
+    }
+
+    destroyDesktopClones(section){
+      const c = this.carousels[section]; if (!c || !c.cloned) return;
+      c.track.querySelectorAll('[data-clone]').forEach(n=>n.remove());
+      c.cloned = false;
+      c.base = 0;
+      c.currentIndex = c.normIndex;     // map back to originals
+    }
+
+    /* ===== Dots ===== */
+    buildDots(section){
+      const c = this.carousels[section]; if (!c || !c.dotsBox) return;
+      c.dotsBox.innerHTML = '';
+      const total = c.count; // always originals count for dots
+      for (let i=0;i<total;i++){
+        const dot = document.createElement('button');
+        dot.className = `clients-like-dot-{{ carousel_id }}${i===0?' active':''}`;
+        dot.setAttribute('role','tab');
+        dot.setAttribute('aria-label', `Go to card ${i+1}`);
+        dot.addEventListener('click', ()=>{
+          if (this.isDesktop){
+            if (c.cloned) {
+              // choose the nearest equivalent index among left|center|right bands
+              const options = [c.base - c.count + i, c.base + i, c.base + c.count + i];
+              let target = options[0];
+              let best = Math.abs(target - c.currentIndex);
+              for (let k=1;k<options.length;k++){
+                const d = Math.abs(options[k] - c.currentIndex);
+                if (d < best){ best = d; target = options[k]; }
+              }
+              c.currentIndex = target;
+            } else {
+              // finite mode - just go to the index
+              c.currentIndex = i;
+            }
+            c.normIndex = i;
+            this.center(section, true);
+          } else {
+            c.mIndex = i;
+            this.goToMobileIndex(section, i);
+          }
+        });
+        c.dotsBox.appendChild(dot);
+      }
+      this.updateDots(section);
+    }
+
+    updateDots(section){
+      const c = this.carousels[section]; if (!c || !c.dotsBox) return;
+      const dots = c.dotsBox.querySelectorAll(`.clients-like-dot-{{ carousel_id }}`);
+      const active = this.isDesktop ? c.normIndex : c.mIndex;
+      dots.forEach((d,i)=>{
+        const on = i === active;
+        d.classList.toggle('active', on);
+        d.setAttribute('aria-selected', on);
+        d.setAttribute('aria-current', on ? 'true' : 'false');
+      });
+    }
+
+    /* ===== Mobile scroll tracking (finite) ===== */
+    setupMobileScrollTracking(section){
+      const c = this.carousels[section]; if (!c) return;
+      let ticking = false, endTO = null;
+
+      const getStep = () => (c.cardWidth + (this.isDesktop ? c.gap : 16));
+      const computeIndex = () => {
+        const idx = Math.round(c.container.scrollLeft / getStep());
+        return Math.max(0, Math.min(c.count-1, idx));
+      };
+
+      const onScroll = ()=>{
+        if (this.isDesktop) return;
+        if (!ticking){
+          ticking = true;
+          requestAnimationFrame(()=>{ c.mIndex = computeIndex(); this.updateDots(section); ticking = false; });
+        }
+        clearTimeout(endTO);
+        endTO = setTimeout(()=>{ if (!this.isDesktop){ this.goToMobileIndex(section, c.mIndex); } }, 120);
+      };
+
+      c.container.addEventListener('scroll', onScroll, { passive:true });
+
+      c.container.addEventListener('touchstart', ()=> this.classList.add('is-animating'), { passive:true });
+      c.container.addEventListener('touchend',   ()=> this.classList.remove('is-animating'), { passive:true });
+      if ('onscrollend' in c.container){
+        c.container.addEventListener('scrollend', ()=>{ if (!this.isDesktop) this.goToMobileIndex(section, computeIndex()); }, { passive:true });
+      }
+    }
+
+    goToMobileIndex(section, i, animate=true){
+      const c = this.carousels[section]; if (!c) return;
+      const step = c.cardWidth + 16;
+      const x = i * step;
+      c.isProgrammatic = true;
+      c.container.scrollTo({ left: x, behavior: animate ? 'smooth' : 'auto' });
+      clearTimeout(c.progTO);
+      c.progTO = setTimeout(()=>{ c.isProgrammatic = false; this.updateVideoPlayback(section); }, animate ? 420 : 0);
+      this.updateDots(section);
+      this.updateNav(section);
+    }
+
+    /* ===== Layout / Centering ===== */
+    recomputeLayout(section){
+      const c = this.carousels[section]; if (!c) return;
+      c.cardWidth = (c.originals[0]?.offsetWidth) || c.cardWidth;
+      c.padLeft   = parseFloat(getComputedStyle(c.track).paddingLeft) || 0;
+
+      if (this.isDesktop){
+        // Only build clones if we have more than 4 cards
+        if (!c.cloned && c.count > 4) this.buildDesktopClones(section);
+        // If we have 4 or fewer cards, make sure clones are destroyed
+        if (c.cloned && c.count <= 4) this.destroyDesktopClones(section);
+        
+        c.normIndex = ((c.normIndex % c.count) + c.count) % c.count;
+        c.currentIndex = c.cloned ? c.base + c.normIndex : c.normIndex;
+
+        // Balance finite strips so one card is visible on each side of the main card (if possible)
+        this.balanceTrack(section);
+      } else {
+        if (c.cloned) this.destroyDesktopClones(section);
+        const portW = c.container.clientWidth;
+        const edge  = Math.max(0, (portW - c.cardWidth) / 2);
+        c.container.style.setProperty('--mobile-edge', `${edge}px`);
+
+        // Reset any desktop balancing on mobile
+        c.track.style.paddingLeft = '';
+        c.track.style.paddingRight = '';
+        c.padLeft = parseFloat(getComputedStyle(c.track).paddingLeft) || 0;
+      }
+
+      this.buildDots(section);
+      this.updateDots(section);
+    }
+    /* Get current translateX of an element (px) */
+    getTranslateX(el){
+      const t = getComputedStyle(el).transform;
+      if (!t || t === 'none') return 0;
+      // matrix(a,b,c,d,tx,ty) OR matrix3d(...)
+      const parts = t.includes('matrix3d')
+        ? t.match(/matrix3d\(([^)]+)\)/)[1].split(',').map(parseFloat)
+        : t.match(/matrix\(([^)]+)\)/)[1].split(',').map(parseFloat);
+      // 2D matrix -> tx at index 4, 3D matrix -> tx at index 12
+      return t.includes('matrix3d') ? parts[12] : parts[4];
+    }
+
+    /* Exact translateX we must apply so the given trackIndex is perfectly centered */
+    computeTranslateXForCard(c, trackIndex){
+      const target = c.track.children[trackIndex];
+      if (!target) return this.getTranslateX(c.track);
+
+      const containerRect = c.container.getBoundingClientRect();
+      const targetRect    = target.getBoundingClientRect();
+      const containerCenter = containerRect.left + containerRect.width / 2;
+      const targetCenter    = targetRect.left + targetRect.width / 2;
+
+      const currentTx   = this.getTranslateX(c.track);
+      const deltaNeeded = targetCenter - containerCenter; // how far off we are *right now*
+      // New absolute translateX so that targetCenter aligns with containerCenter
+      return Math.round(currentTx - deltaNeeded);
+    }
+    /* Use the DOM-measured translateX instead of a derived offset */
+    center(section, animate=true){
+      const c = this.carousels[section]; if (!c) return;
+
+      if (!this.isDesktop){
+        this.updateNav(section);
+        this.updateDots(section);
+        return;
+      }
+
+      const tx = this.computeTranslateXForCard(c, c.currentIndex);
+      c.track.style.transition = animate ? 'transform .6s cubic-bezier(.16,1,.3,1)' : 'none';
+      this.classList.toggle('is-animating', !!animate);
+      c.track.style.transform = `translate3d(${tx}px,0,0)`;
+
+      clearTimeout(c._afterTO);
+      c._afterTO = setTimeout(()=>{
+        if (c.cloned) {
+          const desired = c.base + this.normalizeDesktop(c, c.currentIndex);
+          if (desired !== c.currentIndex){
+            c.currentIndex = desired;
+            const tx2 = this.computeTranslateXForCard(c, c.currentIndex);
+            c.track.style.transition = 'none';
+            c.track.style.transform = `translate3d(${tx2}px,0,0)`;
+          }
+        } else {
+          c.currentIndex = this.clamp(c.currentIndex, 0, c.count - 1);
+        }
+        this.markMainCard(section);   // finite mode trusts the selected index
+        this.classList.remove('is-animating');
+        this.updateVideoPlayback(section);
+      }, animate ? 620 : 0);
+
+      this.updateNav(section);
+      this.updateDots(section);
+    }
+
+    offsetToCenter(c, trackIndex){
+      // Robust centering: measure the target card’s actual position in the track
+      const target = c.track.children[trackIndex];
+      if (!target) return 0;
+
+      // offsetLeft includes the track’s padding and the flex gap before this card
+      const cardCenter      = target.offsetLeft + target.offsetWidth / 2;
+      const containerCenter = c.container.clientWidth / 2;
+
+      // Translate the track so the card’s center aligns with the container’s center
+      return Math.round(cardCenter - containerCenter);
+    }
+
+
+    normalizeDesktop(c, trackIndex){
+      const rel = trackIndex - (c.cloned ? c.base : 0);
+      const n = c.count;
+      return ((rel % n) + n) % n;
+    }
+
+/* ===== Visual-center main-card detection & index sync ===== */
+markMainCard(section){
+  const c = this.carousels[section]; if (!c) return;
+  (c.track.querySelectorAll('.carousel-card-{{ carousel_id }}.main-card')||[])
+    .forEach(el=>el.classList.remove('main-card'));
+  if (!this.isDesktop) return;
+
+  let activeIdx;
+
+  if (!c.cloned) {
+    // FINITE (≤4): trust the index we navigated to
+    activeIdx = Math.max(0, Math.min(c.currentIndex, c.count - 1));
+  } else {
+    // INFINITE (>4): pick the visually centered card
+    const cards = Array.from(c.track.children);
+    const midX  = c.container.getBoundingClientRect().left + c.container.clientWidth / 2;
+
+    let best = { i: 0, d: Infinity };
+    for (let i = 0; i < cards.length; i++){
+      const r  = cards[i].getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const d  = Math.abs(cx - midX);
+      if (d < best.d) best = { i, d };
+    }
+    activeIdx = best.i;
+  }
+
+  const all = Array.from(c.track.children);
+  const active = all[activeIdx];
+  if (active) active.classList.add('main-card');
+
+  // keep indices and UI in sync
+  c.currentIndex = activeIdx;
+  c.normIndex    = this.normalizeDesktop(c, activeIdx);
+  this.updateDots(section);
+  this.updateNav(section);
+}
+
+
+
+        /* One-card steps — finite uses currentIndex to avoid desync */
+        prev(section){
+          const c = this.carousels[section]; if (!c) return;
+
+          if (this.isDesktop){
+            if (c.cloned) {
+              // Infinite mode
+              c.currentIndex = c.currentIndex - 1;
+              c.normIndex = this.normalizeDesktop(c, c.currentIndex);
+            } else {
+              // Finite mode
+              c.currentIndex = this.clamp(c.currentIndex - 1, 0, c.count - 1);
+              c.normIndex    = c.currentIndex;
+            }
+            this.center(section, true);
+          } else {
+            c.mIndex = this.clamp(c.mIndex - 1, 0, c.count - 1);
+            this.goToMobileIndex(section, c.mIndex);
+          }
+        }
+    
+    next(section){
+      const c = this.carousels[section]; if (!c) return;
+
+      if (this.isDesktop){
+        if (c.cloned) {
+          // Infinite mode
+          c.currentIndex = c.currentIndex + 1;
+          c.normIndex = this.normalizeDesktop(c, c.currentIndex);
+        } else {
+          // Finite mode
+          c.currentIndex = this.clamp(c.currentIndex + 1, 0, c.count - 1);
+          c.normIndex    = c.currentIndex;
+        }
+        this.center(section, true);
+      } else {
+        c.mIndex = this.clamp(c.mIndex + 1, 0, c.count - 1);
+        this.goToMobileIndex(section, c.mIndex);
+      }
+    }
+
+    recenterAll(animate=true){
+      Object.keys(this.carousels).forEach(s=> this.center(s, animate));
+    }
+
+    updateNav(section){
+      const c = this.carousels[section]; if (!c) return;
+      if (this.isDesktop){
+        if (c.cloned) {
+          // Infinite mode - buttons are never disabled
+          if (c.prevBtn) c.prevBtn.disabled = false;
+          if (c.nextBtn) c.nextBtn.disabled = false;
+        } else {
+          // Finite mode - disable at boundaries
+          const single = c.count <= 1;
+          if (c.prevBtn) c.prevBtn.disabled = single || c.normIndex <= 0;
+          if (c.nextBtn) c.nextBtn.disabled = single || c.normIndex >= c.count - 1;
+        }
+      } else {
+        const single = c.count <= 1;
+        if (c.prevBtn) c.prevBtn.disabled = single || c.mIndex <= 0;
+        if (c.nextBtn) c.nextBtn.disabled = single || c.mIndex >= c.count - 1;
+      }
+    }
+
+    setupGlobalHandlers(){
+      const onResize = this.debounce(()=>{
+        const wasDesktop = this.isDesktop;
+        this.isDesktop = window.innerWidth >= 768;
+        Object.keys(this.carousels).forEach(section=>{
+          const c = this.carousels[section];
+          if (wasDesktop !== this.isDesktop){
+            if (this.isDesktop){
+              // switching to desktop: rebuild clones only if count > 4
+              if (!c.cloned && c.count > 4) this.buildDesktopClones(section);
+              c.currentIndex = c.cloned ? c.base + c.normIndex : c.normIndex;
+            } else {
+              // switching to mobile: remove clones & reset scroll index
+              this.destroyDesktopClones(section);
+              c.mIndex = c.normIndex;
+              c.container.scrollLeft = 0;
+            }
+          }
+          this.recomputeLayout(section);
+          this.center(section, false);
+        });
+      }, 180);
+      if (!this._resizeAttached){ this._resizeAttached = true; window.addEventListener('resize', onResize, { passive:true }); }
+    }
+
+    /* ===== Videos: only play the active item ===== */
+    bindVideos(section){
+      const c = this.carousels[section]; if (!c) return;
+      const allCards = Array.from(c.track.children);
+      allCards.forEach(card=>{
+        const v = card.querySelector('video');
+        if (!v || this.bound.has(v)) return;
+        this.bound.set(v, true);
+        v.muted = true; v.playsInline = true; v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline','');
+        v.preload = 'metadata';
+        const wrap = card.querySelector('.card-media-{{ carousel_id }}') || card;
+        wrap.addEventListener('mouseenter', ()=>{ if (this.isDesktop) this.safePlay(v); });
+        wrap.addEventListener('mouseleave', ()=>{ if (this.isDesktop){ try{ v.pause(); }catch{} v.currentTime = 0; }});
+      });
+    }
+
+    updateVideoPlayback(section){
+      const c = this.carousels[section]; if (!c) return;
+      const cards = Array.from(c.track.children);
+      const activeIdx = this.isDesktop ? c.currentIndex : c.mIndex; // desktop: track index, mobile: originals index
+      cards.forEach((card,i)=>{
+        const v = card.querySelector('video'); if (!v) return;
+        const shouldPlay = this.isDesktop ? (i === activeIdx) : (i === activeIdx); // clones removed on mobile
+        if (shouldPlay){ this.safePlay(v); } else { try{ v.pause(); }catch{} v.autoplay = false; }
+      });
+    }
+
+    safePlay(v){
+      if (!v) return;
+      if (v.readyState < 2){
+        try{ v.load(); }catch{}
+        v.addEventListener('canplaythrough', ()=> this._tryPlay(v), { once:true });
+      } else { this._tryPlay(v); }
+    }
+    _tryPlay(v){ const p = v.play(); if (p && typeof p.then==='function'){ p.catch(()=>{}); } }
+
+    /* utils */
+    debounce(fn, wait=120){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(this,a), wait); }; }
+  }
+
+  customElements.define(tagName, SmoothMetaCarousel);
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Product Carousel",
+  "settings": [
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "content_max_width", "label": "Content max width", "min": 960, "max": 1920, "step": 20, "unit": "px", "default": 1280 },
+    { "type": "checkbox", "id": "full_bleed", "label": "Full width (edge-to-edge)", "default": false },
+
+    { "type": "range", "id": "section_padding_top", "min": 40, "max": 120, "step": 4, "unit": "px", "label": "Section top padding", "default": 80 },
+    { "type": "range", "id": "section_padding_bottom", "min": 40, "max": 120, "step": 4, "unit": "px", "label": "Section bottom padding", "default": 80 },
+    { "type": "range", "id": "section_inner_spacing", "min": 20, "max": 80, "step": 4, "unit": "px", "label": "Between sections spacing", "default": 40 },
+
+    { "type": "header", "content": "Card layout" },
+    { "type": "range", "id": "card_width", "min": 240, "max": 520, "step": 4, "unit": "px", "label": "Card width (desktop)", "default": 320 },
+    { "type": "range", "id": "card_height", "min": 320, "max": 640, "step": 4, "unit": "px", "label": "Card height (desktop)", "default": 480 },
+    { "type": "range", "id": "card_gap", "min": 8, "max": 48, "step": 1, "unit": "px", "label": "Gap between cards", "default": 24 },
+    { "type": "range", "id": "border_radius", "min": 8, "max": 32, "step": 2, "unit": "px", "label": "Card border radius", "default": 20 },
+
+    { "type": "range", "id": "mobile_card_width", "min": 220, "max": 360, "step": 4, "unit": "px", "label": "Card width (mobile)", "default": 280 },
+    { "type": "range", "id": "mobile_card_height", "min": 300, "max": 520, "step": 4, "unit": "px", "label": "Card height (mobile)", "default": 400 },
+
+    { "type": "header", "content": "Card text: show/placement" },
+    { "type": "checkbox", "id": "show_card_title", "label": "Show title", "default": true },
+    { "type": "checkbox", "id": "show_card_description", "label": "Show description", "default": true },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "background_color", "label": "Section background", "default": "#000000" },
+    { "type": "color", "id": "card_background", "label": "Card background", "default": "#111111" },
+    { "type": "color", "id": "media_background", "label": "Media background", "default": "#1a1a1a" },
+
+    { "type": "color", "id": "text_color", "label": "Primary text", "default": "#ffffff" },
+    { "type": "color", "id": "muted_text_color", "label": "Muted text", "default": "#999999" },
+    { "type": "color", "id": "section_heading_color", "label": "Section heading color", "default": "#ffffff" },
+    { "type": "select", "id": "section_heading_align", "label": "Section heading alignment", "default": "center", "options": [
+      { "value": "left", "label": "Left" },
+      { "value": "center", "label": "Center" },
+      { "value": "right", "label": "Right" }
+    ]},
+    { "type": "range", "id": "heading_font_size", "min": 24, "max": 72, "step": 2, "unit": "px", "label": "Heading font size", "default": 48 },
+
+    { "type": "header", "content": "Card text colors" },
+    { "type": "color", "id": "card_title_color", "label": "Card title color", "default": "#ffffff" },
+    { "type": "color", "id": "card_description_color", "label": "Card description color", "default": "rgba(255,255,255,0.9)" },
+
+    { "type": "color", "id": "border_color", "label": "Border color", "default": "#ffffff" },
+    { "type": "color", "id": "focus_color", "label": "Focus outline", "default": "#ffffff" },
+
+    { "type": "color", "id": "pagination_dot_color", "label": "Pagination dot color", "default": "#ffffff" },
+    { "type": "color", "id": "pagination_dot_active_color", "label": "Active pagination dot color", "default": "#ffffff" },
+
+    { "type": "header", "content": "Section headings text" },
+    { "type": "text", "id": "about_heading", "label": "About the Product heading", "default": "About the Product" },
+    { "type": "text", "id": "how_it_works_heading", "label": "How It Works heading", "default": "How It Works" },
+    { "type": "text", "id": "after_sales_heading", "label": "After Sales Service heading", "default": "After Sales Service" },
+    { "type": "range", "id": "heading_spacing", "min": 20, "max": 80, "step": 4, "unit": "px", "label": "Heading bottom spacing", "default": 60 },
+
+    { "type": "header", "content": "How It Works – Card" },
+    { "type": "range", "id": "how_card_max_w", "label": "Card max width", "min": 420, "max": 800, "step": 10, "unit": "px", "default": 560 },
+    { "type": "range", "id": "how_media_h", "label": "Video height (desktop)", "min": 360, "max": 720, "step": 10, "unit": "px", "default": 520 },
+    { "type": "color", "id": "how_card_bg", "label": "Card background", "default": "#0b0b0b" },
+    { "type": "range", "id": "how_card_radius", "label": "Card radius", "min": 12, "max": 36, "step": 2, "unit": "px", "default": 24 },
+    { "type": "select", "id": "how_text_align", "label": "Text alignment", "default": "center", "options": [
+      { "value": "left", "label": "Left" },
+      { "value": "center", "label": "Center" },
+      { "value": "right", "label": "Right" }
+    ]},
+    { "type": "text", "id": "video_title", "label": "Video title", "default": "How It Works" },
+    { "type": "text", "id": "video_description", "label": "Video description", "default": "Watch our step-by-step process in action" },
+    { "type": "text", "id": "how_link_label", "label": "Download link label", "default": "Download Manual (PDF)" },
+    { "type": "color", "id": "how_link_color", "label": "Download link color", "default": "#ffffff" }
+  ],
+  "presets": [
+    { "name": "Product Carousel", "category": "Product" }
+  ]
+}
+{% endschema %}

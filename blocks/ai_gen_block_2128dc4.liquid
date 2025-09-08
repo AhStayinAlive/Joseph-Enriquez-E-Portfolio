@@ -1,0 +1,444 @@
+{% doc %}
+  @prompt
+    make me a header
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-header-{{ ai_gen_id }} {
+    background-color: {{ block.settings.background_color }};
+    padding: {{ block.settings.padding_vertical }}px 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .ai-header-container-{{ ai_gen_id }} {
+    max-width: {{ settings.page_width }}px;
+    margin: 0 auto;
+    padding: 0 {{ settings.spacing_grid_horizontal }}px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .ai-header-logo-{{ ai_gen_id }} {
+    flex-shrink: 0;
+  }
+
+  .ai-header-logo-{{ ai_gen_id }} img {
+    height: {{ block.settings.logo_height }}px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .ai-header-logo-placeholder-{{ ai_gen_id }} {
+    height: {{ block.settings.logo_height }}px;
+    width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f4f4f4;
+    border-radius: 4px;
+  }
+
+  .ai-header-logo-placeholder-{{ ai_gen_id }} svg {
+    width: 60px;
+    height: 60px;
+    opacity: 0.5;
+  }
+
+  .ai-header-nav-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex-grow: 1;
+    justify-content: center;
+  }
+
+  .ai-header-nav-link-{{ ai_gen_id }} {
+    color: {{ block.settings.text_color }};
+    text-decoration: none;
+    font-size: {{ block.settings.nav_font_size }}px;
+    font-weight: {{ block.settings.nav_font_weight }};
+    transition: color 0.3s ease;
+  }
+
+  .ai-header-nav-link-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.text_hover_color }};
+  }
+
+  .ai-header-actions-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+  }
+
+  .ai-header-search-{{ ai_gen_id }} {
+    position: relative;
+  }
+
+  .ai-header-search-input-{{ ai_gen_id }} {
+    padding: 8px 35px 8px 12px;
+    border: 1px solid {{ block.settings.input_border_color }};
+    border-radius: {{ block.settings.input_border_radius }}px;
+    background-color: {{ block.settings.input_background_color }};
+    color: {{ block.settings.text_color }};
+    font-size: 14px;
+    width: 200px;
+    transition: border-color 0.3s ease;
+  }
+
+  .ai-header-search-input-{{ ai_gen_id }}:focus {
+    outline: none;
+    border-color: {{ block.settings.text_hover_color }};
+  }
+
+  .ai-header-search-button-{{ ai_gen_id }} {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: {{ block.settings.text_color }};
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .ai-header-search-button-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.text_hover_color }};
+  }
+
+  .ai-header-icon-button-{{ ai_gen_id }} {
+    background: none;
+    border: none;
+    color: {{ block.settings.text_color }};
+    cursor: pointer;
+    padding: 8px;
+    transition: color 0.3s ease;
+    position: relative;
+  }
+
+  .ai-header-icon-button-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.text_hover_color }};
+  }
+
+  .ai-header-cart-count-{{ ai_gen_id }} {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: {{ block.settings.cart_badge_color }};
+    color: {{ block.settings.cart_badge_text_color }};
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .ai-header-mobile-menu-{{ ai_gen_id }} {
+    display: none;
+    background: none;
+    border: none;
+    color: {{ block.settings.text_color }};
+    cursor: pointer;
+    padding: 8px;
+  }
+
+  @media screen and (max-width: 990px) {
+    .ai-header-nav-{{ ai_gen_id }} {
+      display: none;
+    }
+
+    .ai-header-mobile-menu-{{ ai_gen_id }} {
+      display: block;
+    }
+
+    .ai-header-search-{{ ai_gen_id }} {
+      display: none;
+    }
+
+    .ai-header-container-{{ ai_gen_id }} {
+      gap: 15px;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-header-container-{{ ai_gen_id }} {
+      padding: 0 {{ settings.spacing_grid_horizontal | divided_by: 2 }}px;
+    }
+
+    .ai-header-logo-{{ ai_gen_id }} img,
+    .ai-header-logo-placeholder-{{ ai_gen_id }} {
+      height: {{ block.settings.logo_height | times: 0.8 }}px;
+    }
+
+    .ai-header-actions-{{ ai_gen_id }} {
+      gap: 10px;
+    }
+  }
+{% endstyle %}
+
+<header class="ai-header-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-header-container-{{ ai_gen_id }}">
+    <div class="ai-header-logo-{{ ai_gen_id }}">
+      {% if block.settings.logo %}
+        <a href="{{ routes.root_url }}">
+          <img
+            src="{{ block.settings.logo | image_url: width: 300 }}"
+            alt="{{ shop.name }}"
+            width="{{ block.settings.logo.width }}"
+            height="{{ block.settings.logo.height }}"
+            loading="lazy"
+          >
+        </a>
+      {% else %}
+        <a href="{{ routes.root_url }}">
+          <div class="ai-header-logo-placeholder-{{ ai_gen_id }}">
+            {{ 'image' | placeholder_svg_tag }}
+          </div>
+        </a>
+      {% endif %}
+    </div>
+
+    <nav class="ai-header-nav-{{ ai_gen_id }}">
+      {% for link in linklists[block.settings.menu].links %}
+        <a href="{{ link.url }}" class="ai-header-nav-link-{{ ai_gen_id }}">
+          {{ link.title }}
+        </a>
+      {% endfor %}
+    </nav>
+
+    <div class="ai-header-actions-{{ ai_gen_id }}">
+      {% if block.settings.show_search %}
+        <div class="ai-header-search-{{ ai_gen_id }}">
+          <form action="{{ routes.search_url }}" method="get" role="search">
+            <input
+              type="search"
+              name="q"
+              class="ai-header-search-input-{{ ai_gen_id }}"
+              placeholder="{{ block.settings.search_placeholder }}"
+              value="{{ search.terms | escape }}"
+            >
+            <button type="submit" class="ai-header-search-button-{{ ai_gen_id }}" aria-label="Search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+            </button>
+          </form>
+        </div>
+      {% endif %}
+
+      {% if block.settings.show_account %}
+        <a href="{{ routes.account_url }}" class="ai-header-icon-button-{{ ai_gen_id }}" aria-label="Account">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </a>
+      {% endif %}
+
+      {% if block.settings.show_cart %}
+        <a href="{{ routes.cart_url }}" class="ai-header-icon-button-{{ ai_gen_id }}" aria-label="Cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L6 21H20"></path>
+            <circle cx="9" cy="19" r="1"></circle>
+            <circle cx="20" cy="19" r="1"></circle>
+          </svg>
+          {% if cart.item_count > 0 %}
+            <span class="ai-header-cart-count-{{ ai_gen_id }}">{{ cart.item_count }}</span>
+          {% endif %}
+        </a>
+      {% endif %}
+
+      <button class="ai-header-mobile-menu-{{ ai_gen_id }}" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Logo"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo image"
+    },
+    {
+      "type": "range",
+      "id": "logo_height",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Logo height",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Navigation"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "range",
+      "id": "nav_font_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Navigation font size",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "nav_font_weight",
+      "label": "Navigation font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "400"
+    },
+    {
+      "type": "header",
+      "content": "Features"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show search",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "search_placeholder",
+      "label": "Search placeholder",
+      "default": "Search products..."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_account",
+      "label": "Show account icon",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cart",
+      "label": "Show cart icon",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "text_hover_color",
+      "label": "Text hover color",
+      "default": "#0171e3"
+    },
+    {
+      "type": "color",
+      "id": "input_background_color",
+      "label": "Search background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "input_border_color",
+      "label": "Search border color",
+      "default": "#e0e0e0"
+    },
+    {
+      "type": "color",
+      "id": "cart_badge_color",
+      "label": "Cart badge color",
+      "default": "#e32402"
+    },
+    {
+      "type": "color",
+      "id": "cart_badge_text_color",
+      "label": "Cart badge text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "padding_vertical",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Vertical padding",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "input_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Search border radius",
+      "default": 4
+    }
+  ],
+  "presets": [
+    {
+      "name": "Header"
+    }
+  ]
+}
+{% endschema %}
