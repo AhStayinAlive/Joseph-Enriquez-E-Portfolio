@@ -1,0 +1,107 @@
+{%- comment -%}
+  Shared Broen product card snippet
+  Params:
+    - product: Product object (required)
+    - ai_gen_id: identifier string to match classes/CSS from the calling block (required)
+    - title_truncate: optional number (fallback 50)
+    - classification_placeholder_text: optional string (fallback "Premium Lock")
+{%- endcomment -%}
+
+{%- assign _id = ai_gen_id | default: 'cards' -%}
+{%- assign _truncate = title_truncate | default: 50 -%}
+{%- assign _placeholder = classification_placeholder_text | default: 'Premium Lock' -%}
+
+{%- assign door_mf = product.metafields.custom.door_type -%}
+{%- if door_mf == blank -%}{%- assign door_mf = product.metafields['custom']['door_type'] -%}{%- endif -%}
+{%- if door_mf == blank -%}{%- assign door_type_raw = '' -%}{%- else -%}
+  {%- if door_mf.value != blank -%}{%- assign door_type_raw = door_mf.value -%}{%- else -%}{%- assign door_type_raw = door_mf -%}{%- endif -%}
+{%- endif -%}
+{%- assign door_type_slug = door_type_raw | default: 'unassigned' | handleize -%}
+
+{%- assign hero_media = product.metafields.custom.video -%}
+{%- assign product_media_type   = product.metafields.custom.media_type | default: 'image' -%}
+{%- assign product_video_media  = product.metafields.custom.product_video -%}
+{%- assign product_video_poster = product.metafields.custom.video_poster_image -%}
+{%- assign product_video_hover  = product.metafields.custom.video_hover_only -%}
+{%- if product_video_hover == blank -%}{% assign product_video_hover = true %}{%- endif -%}
+
+{% assign pv_url = '' %}
+{% if product_video_media != blank %}
+  {% assign pv_url = product_video_media | file_url %}
+  {% if pv_url == blank and product_video_media.url %}{% assign pv_url = product_video_media.url %}{% endif %}
+{% endif %}
+
+{% assign _has_video = false %}
+{% if hero_media != blank %}{% assign _has_video = true %}{% endif %}
+{% if _has_video == false and product_media_type == 'video' and pv_url != '' %}{% assign _has_video = true %}{% endif %}
+
+<article class="broen-card-{{ _id }}" data-door-type="{{ door_type_slug }}" data-product-id="{{ product.id }}">
+  <div class="broen-card-image-{{ _id }} {% if _has_video %}has-video{% endif %} {% if hero_media != blank %}has-hover-video{% endif %}">
+    {% if product.featured_image %}
+      <img
+        src="{{ product.featured_image | image_url: width: 400 }}"
+        srcset="{{ product.featured_image | image_url: width: 200 }} 200w, {{ product.featured_image | image_url: width: 400 }} 400w, {{ product.featured_image | image_url: width: 600 }} 600w, {{ product.featured_image | image_url: width: 800 }} 800w"
+        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 320px"
+        alt="{{ product.featured_image.alt | default: product.title | escape }}"
+        loading="lazy" width="400" height="400">
+    {% else %}
+      <div class="broen-card-image-placeholder-{{ _id }}">
+        {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+      </div>
+    {% endif %}
+
+    {% if hero_media != blank %}
+      {% assign hero_url  = hero_media | file_url %}
+      {% assign hero_path = hero_url | split:'?' | first | split:'#' | first %}
+      {% assign hero_ext  = hero_path | split:'.' | last | downcase %}
+      <video class="broen-product-video-{{ _id }} broen-hero-video" {% if product_video_poster %}poster="{{ product_video_poster | image_url: width: 600 }}"{% elsif product.featured_image %}poster="{{ product.featured_image | image_url: width: 600 }}"{% endif %} muted playsinline loop preload="metadata" width="400" height="400" aria-hidden="true" data-hover-only="true" data-autoplay="false">
+        {% if hero_ext == 'mp4' %}<source src="{{ hero_url }}" type="video/mp4">{% endif %}
+        {% if hero_ext == 'webm' %}<source src="{{ hero_url }}" type="video/webm">{% endif %}
+        {% unless hero_ext == 'mp4' or hero_ext == 'webm' %}<source src="{{ hero_url }}">{% endunless %}
+      </video>
+    {% elsif product_media_type == 'video' and pv_url != '' %}
+      {% assign pv_path = pv_url | split:'?' | first | split:'#' | first %}
+      {% assign pv_ext  = pv_path | split:'.' | last | downcase %}
+      <video class="broen-product-video-{{ _id }}" poster="{% if product_video_poster %}{{ product_video_poster | image_url: width: 600 }}{% elsif product.featured_image %}{{ product.featured_image | image_url: width: 600 }}{% endif %}" muted loop playsinline preload="metadata" width="400" height="400" data-hover-only="{{ product_video_hover }}" data-autoplay="{% unless product_video_hover %}true{% else %}false{% endunless %}" data-product-id="{{ product.id }}">
+        {% if pv_ext == 'mp4' %}<source src="{{ pv_url }}" type="video/mp4">{% endif %}
+        {% if pv_ext == 'webm' %}<source src="{{ pv_url }}" type="video/webm">{% endif %}
+        {% unless pv_ext == 'mp4' or pv_ext == 'webm' %}<source src="{{ pv_url }}">{% endunless %}
+      </video>
+    {% endif %}
+
+    {% if door_type_slug == 'unassigned' %}
+      <div class="broen-door-classification-placeholder-{{ _id }}">{{ _placeholder }}</div>
+    {% else %}
+      {% assign door_label = door_type_slug | replace: '-', ' ' | capitalize %}
+      <div class="broen-door-classification-{{ _id }}">{{ door_label }}</div>
+    {% endif %}
+  </div>
+
+  <div class="broen-card-content-{{ _id }}">
+    <div class="broen-card-title-container-{{ _id }}">
+      <h3 class="broen-card-title-{{ _id }}">
+        <a href="{{ product.url }}" aria-label="View {{ product.title | escape }}">{{ product.title | truncate: _truncate }}</a>
+      </h3>
+    </div>
+
+    <div class="broen-price-{{ _id }}">
+      {% if product.compare_at_price > product.price %}
+        <span class="broen-compare-price-{{ _id }}">{{ product.compare_at_price | money }}</span>
+      {% endif %}
+      <span class="broen-current-price-{{ _id }}">{{ product.price | money }}</span>
+    </div>
+
+    {% if door_type_slug == 'unassigned' %}
+      <div class="broen-door-classification-inline-{{ _id }}">{{ _placeholder }}</div>
+    {% else %}
+      {% assign door_label_inline = door_type_slug | replace: '-', ' ' | capitalize %}
+      <div class="broen-door-classification-inline-{{ _id }}">{{ door_label_inline }}</div>
+    {% endif %}
+
+    <div class="broen-actions-{{ _id }}">
+      <button class="broen-btn-{{ _id }} broen-btn-primary-{{ _id }} broen-atc-btn" data-product-id="{{ product.id }}" data-variant-id="{{ product.selected_or_first_available_variant.id }}" data-variant-available="{{ product.selected_or_first_available_variant.available }}" aria-label="Add {{ product.title | escape }} to cart" {% unless product.selected_or_first_available_variant.available %}disabled{% endunless %}>Add to Cart</button>
+      <a href="{{ product.url }}" class="broen-btn-{{ _id }} broen-btn-secondary-{{ _id }}" aria-label="Buy {{ product.title | escape }} now">Buy Now</a>
+    </div>
+  </div>
+</article>
+

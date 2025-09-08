@@ -909,25 +909,15 @@
     const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
     return res.ok ? res.text() : '';
   }
-  async function fetchSectionPage(page){
+  async function fetchCardsPage(page){
+    const baseCardsUrl = `${window.location.origin}${'{{ collection.url }}'}?view=broen-cards`;
     const cur = new URL(window.location.href);
     const door = cur.searchParams.get('door_type') || '';
-    const qs = new URLSearchParams(cur.searchParams);
-    qs.set('page', page);
-    if (door) qs.set('door_type', door);
-
-    const tries = [
-      `${basePath}?section_id=${encodeURIComponent(sectionId)}&${qs.toString()}`,
-      `${basePath}?sections=${encodeURIComponent(sectionId)}&${qs.toString()}`,
-      `${basePath}?${qs.toString()}`
-    ];
-    for (const u of tries){
-      try {
-        const html = await fetchHTML(u);
-        if (html) return html;
-      } catch(e){}
-    }
-    return '';
+    const url = new URL(baseCardsUrl);
+    url.searchParams.set('page', page);
+    if (door) url.searchParams.set('door_type', door);
+    url.searchParams.set('gid', '{{ ai_gen_id }}');
+    return fetchHTML(url.toString());
   }
   function appendCardsFromHTML(html){
     const tpl = document.createElement('template');
@@ -946,11 +936,10 @@
   }
 
   async function unpaginateAll(){
-    if (!sectionId) return;
-    const maxPages = 50; // safety cap
+    const maxPages = 60; // safety cap
     let any = false;
     for (let p = 2; p <= maxPages; p++){
-      const html = await fetchSectionPage(p);
+      const html = await fetchCardsPage(p);
       if (!html) break;
       const added = appendCardsFromHTML(html);
       if (!added) break;
